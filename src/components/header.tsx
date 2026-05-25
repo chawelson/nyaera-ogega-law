@@ -2,9 +2,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Phone, ChevronDown, Scale, Hammer, BookOpen, Users, Newspaper, Briefcase, MessageSquare } from 'lucide-react';
+import {
+  Menu,
+  X,
+  Phone,
+  ChevronDown,
+  Scale,
+  Hammer,
+  BookOpen,
+  Users,
+  Newspaper,
+  Briefcase,
+  MessageSquare,
+  Mail,
+} from "lucide-react";
+
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaLinkedinIn,
+} from "react-icons/fa";
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -50,45 +70,88 @@ export function Header() {
 
   return (
     <>
-      {/* Top Bar */}
-      <div className="bg-[#0b1026] text-white/80">
-        <div className="site-container flex items-center justify-between py-2.5 text-xs">
-          <div className="flex items-center gap-6">
-            <a href="tel:+254000000000" className="flex items-center gap-2 hover:text-[#f0c675] transition-colors">
-              <Phone size={12} />
-              <span>+254 700 000 000</span>
-            </a>
-            <span className="hidden sm:inline text-white/30">|</span>
-            <span className="hidden sm:inline text-white/60">Nairobi, Kenya</span>
+      {/* 1. TOP BAR - Desktop Only */}
+      <div className="hidden lg:block bg-[#2e3192] text-white border-b border-white/10">
+        <div className="site-container flex items-center justify-between py-3 text-[13px] font-medium">
+          <div className="flex items-center gap-12">
+            <div className="flex items-center gap-8">
+              <a href="tel:+254791646341" className="flex items-center gap-2.5 hover:text-[#f0c675] transition-colors">
+                <Phone size={15} className="text-[#ab812b]" />
+                <span>+254 791 646 341</span>
+              </a>
+              <a href="mailto:info@nyaeraogegaadvocates.com" className="flex items-center gap-2.5 hover:text-[#f0c675] transition-colors">
+                <Mail size={15} className="text-[#ab812b]" />
+                <span>info@nyaeraogegaadvocates.com</span>
+              </a>
+            </div>
+            <div className="flex items-center gap-4 text-white border-l border-white/20 pl-12">
+              <a
+                href="#"
+                className="hover:text-[#ab812b] transition-colors duration-300"
+              >
+                <FaFacebookF size={14} />
+              </a>
+
+              <a
+                href="#"
+                className="hover:text-[#ab812b] transition-colors duration-300"
+              >
+                <FaInstagram size={14} />
+              </a>
+
+              <a
+                href="#"
+                className="hover:text-[#ab812b] transition-colors duration-300"
+              >
+                <FaLinkedinIn size={14} />
+              </a>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/contact" className="hover:text-[#f0c675] transition-colors">Book Consultation</Link>
+          <div className="flex items-center">
+            <Link href="/contact" className="bg-[#ab812b] text-white rounded-full px-6 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-[#1f2368] transition-all duration-300 shadow-lg shadow-black/10">
+              Book Consultation
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Main Header */}
-      <header 
-        className={`sticky top-0 z-50 transition-all duration-500 ${
-          isScrolled 
-            ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-[#2e3192]/5' 
-            : 'bg-white'
-        }`}
-      >
-        <div className="site-container flex items-center justify-between py-4 lg:py-5">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative flex h-11 w-11 items-center justify-center rounded-lg bg-[#2e3192] transition-transform duration-300 group-hover:scale-105">
-              <Scale className="text-[#f0c675]" size={22} />
-            </div>
-            <div className="hidden sm:block">
-              <p className="font-display text-lg font-bold leading-tight text-[#2e3192]">Nyaera Ogega</p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#ab812b]">& Co. Advocates</p>
+      {/* 2. MIDDLE BAR - Logo Section */}
+      <div className="bg-white py-3 lg:py-6">
+        <div className="site-container flex items-center justify-between lg:justify-center">
+          {/* Logo for both Mobile and Desktop */}
+          <Link href="/" className="flex items-center group">
+            <div className="relative h-24 sm:h-24 md:h-36 lg:h-48 w-auto aspect-[3/1]">
+              <Image 
+                src="/logos/Nyaera-Ogega-New-Logo.png" 
+                alt="Nyaera Ogega & Co. Advocates" 
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          {/* Mobile Toggle Button */}
+          <button
+            onClick={() => setIsMobileOpen(!isMobileOpen)}
+            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-[#2e3192]"
+            aria-label="Toggle menu"
+          >
+            {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </div>
+
+      {/* 3. MAIN NAV BAR - Desktop Only Row */}
+      <header 
+        className={`sticky top-0 z-50 transition-all duration-500 ${
+          isScrolled 
+            ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-[#2e3192]/5 border-b border-slate-100' 
+            : 'bg-white border-t border-b border-slate-100'
+        }`}
+      >
+        <div className="site-container hidden lg:flex items-center justify-center py-2">
+          <nav className="flex items-center gap-3">
             {navLinks.map((link) => (
               <div 
                 key={link.href} 
@@ -98,7 +161,7 @@ export function Header() {
               >
                 <Link
                   href={link.href}
-                  className={`flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                  className={`flex items-center gap-2 rounded-lg px-5 py-3 text-[15px] font-bold transition-all duration-300 ${
                     isActive(link.href)
                       ? 'text-[#2e3192] bg-[#2e3192]/5'
                       : 'text-slate-600 hover:text-[#2e3192] hover:bg-slate-50'
@@ -110,8 +173,8 @@ export function Header() {
 
                 {/* Dropdown */}
                 {link.children && activeDropdown === link.href && (
-                  <div className="absolute top-full left-0 mt-1 w-64 animate-slide-down">
-                    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-[#2e3192]/10">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 animate-slide-down">
+                    <div className="rounded-xl border border-slate-100 bg-white p-2 shadow-2xl shadow-[#2e3192]/15">
                       {link.children.map((child) => (
                         <Link
                           key={child.href}
@@ -128,25 +191,6 @@ export function Header() {
               </div>
             ))}
           </nav>
-
-          {/* CTA Button */}
-          <div className="hidden lg:block">
-            <Link 
-              href="/contact" 
-              className="btn-primary animate-pulse-gold rounded-lg bg-[#ab812b] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#ab812b]/25 hover:bg-[#2e3192] hover:shadow-[#2e3192]/25 transition-all duration-300"
-            >
-              Free Consultation
-            </Link>
-          </div>
-
-          {/* Mobile Toggle */}
-          <button
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-[#2e3192]"
-            aria-label="Toggle menu"
-          >
-            {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
 
         {/* Mobile Menu */}

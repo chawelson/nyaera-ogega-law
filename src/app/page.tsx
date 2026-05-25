@@ -26,7 +26,7 @@ export default function HomePage() {
               <Image src={images.office} alt="Modern legal chamber" width={720} height={520} className="h-[430px] w-full rounded object-cover" />
               <div className="absolute -bottom-8 -left-8 max-w-sm rounded bg-white p-6 text-[#111827] shadow-2xl">
                 <p className="text-xs font-black uppercase tracking-[.2em] text-[#ab812b]">Nyaera Ogega & Co. Advocates</p>
-                <p className="mt-3 font-display text-2xl font-bold text-[#2e3192]">Practical counsel for high-value legal decisions.</p>
+                <p className="mt-3 font-display text-2xl font-bold text-[#2e3192]">Advocates | Commissioners for aoths | Legal Consultants</p>
               </div>
             </div>
           </div>
@@ -36,16 +36,16 @@ export default function HomePage() {
       <section className="bg-white py-16 md:py-24">
         <div className="site-container grid gap-12 lg:grid-cols-[.9fr_1.1fr] lg:items-center">
           <div className="relative">
-            <Image src={images.signing} alt="Legal document signing" width={720} height={520} className="rounded object-cover shadow-2xl shadow-slate-200" />
+            <Image src={images.aboutno} alt="Legal document signing" width={720} height={520} className="rounded object-cover shadow-2xl shadow-slate-200" />
             <div className="absolute -bottom-5 right-4 rounded bg-[#2e3192] p-6 text-white shadow-xl">
-              <p className="text-4xl font-black">Kenya</p>
-              <p className="text-sm text-white/75">Property and commercial legal support</p>
+              <p className="text-4xl font-black">Kenya's</p>
+              <p className="text-sm text-white/75">trusted legal counsel</p>
             </div>
           </div>
           <div>
             <p className="text-sm font-black uppercase tracking-[.25em] text-[#ab812b]">About the firm</p>
             <h2 className="mt-4 text-3xl font-bold leading-tight text-[#2e3192] sm:text-4xl md:text-5xl">Modern legal service with commercial focus.</h2>
-            <p className="mt-6 text-lg leading-8 text-slate-600">Nyaera Ogega & Co. Advocates is a modern law firm committed to practical, efficient and results-driven legal solutions in conveyancing, real estate, sectional properties, commercial advisory and dispute representation.</p>
+            <p className="mt-6 text-lg leading-8 text-slate-600">At Nyaera Ogega & Co. Advocates, we provide trusted legal counsel tailored to individuals, businesses, and property investors. Our core practice is Real Estate and Conveyancing, complemented by expertise in litigation, employment law, commercial transactions, and legal advisory services. We are driven by a commitment to protecting our clients’ interests through strategic and dependable legal representation.</p>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {values.map((item) => <div key={item.title} className="card-lift rounded border border-slate-200 bg-white p-5"><item.icon className="mb-3 text-[#ab812b]" /><p className="font-bold text-[#111827]">{item.title}</p></div>)}
             </div>

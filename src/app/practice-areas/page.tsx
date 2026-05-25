@@ -1,12 +1,17 @@
 import Image from 'next/image';
 import { PageHero } from '@/components/page-hero';
 import { CTA } from '@/components/cta';
-import { images, practiceAreas } from '@/lib/site-data';
+import { practiceAreas } from '@/lib/site-data';
 
 export default function PracticeAreasPage() {
   return (
     <>
-      <PageHero eyebrow="Practice Areas" title="Specialist support for property, commerce and dispute matters." text="Explore the firm’s core legal services for developers, investors, businesses, institutions and families." image={images.realEstate} />
+      <PageHero 
+        title="Legal Practice Areas" 
+        subtitle="Strategic legal support across property, commercial, litigation, family, employment and advisory matters." 
+        backgroundImage="/images/Conveyancing_Real_Estate.jpeg" 
+        breadcrumb="Practice Areas" 
+      />
       <section className="bg-white py-24">
         <div className="site-container grid gap-8">
           {practiceAreas.map((area, index) => (

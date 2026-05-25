@@ -5,7 +5,12 @@ import { contact, images } from '@/lib/site-data';
 export default function CareersPage() {
   return (
     <>
-      <PageHero eyebrow="Careers" title="Build meaningful legal work with a modern Kenyan firm." text="We welcome ambitious advocates, pupils and legal professionals who value precision, responsiveness and client-focused legal service." image={images.corporate} />
+      <PageHero 
+        title="Careers" 
+        subtitle="Join a modern legal practice committed to excellence, integrity and client service." 
+        backgroundImage="/images/Nairobi_skyline_view.jpeg" 
+        breadcrumb="Careers" 
+      />
       <section className="bg-white py-24">
         <div className="site-container grid gap-12 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
           <div>
@@ -16,7 +21,7 @@ export default function CareersPage() {
             </div>
             <a href={`mailto:${contact.email}?subject=Careers enquiry`} className="mt-8 inline-block rounded bg-[#2e3192] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#ab812b]">Send Career Enquiry</a>
           </div>
-          <Image src={images.corporateAlt} alt="Corporate legal team" width={720} height={620} className="rounded object-cover shadow-2xl shadow-slate-200" />
+          <Image src={images.milicourts} alt="Corporate legal team" width={720} height={620} className="rounded object-cover shadow-2xl shadow-slate-200" />
         </div>
       </section>
     </>

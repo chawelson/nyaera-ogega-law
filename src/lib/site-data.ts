@@ -18,13 +18,20 @@ export const navLinks = [
 export const images = {
   hero: '/images/Main-HomeBanner-Herrolegal_office.jpeg',
   skyline: '/images/Nairobi_skyline_view.jpeg',
+  aboutno: '/images/home-about-banner.jpg',
   signing: '/images/Black_lady_signing_document.jpeg',
   realEstate: '/images/Conveyancing_Real_Estate.jpeg',
   corporate: '/images/Corporate_commercial_law_busine.jpeg',
   corporateAlt: '/images/Corporate_commercial_law_busines.jpeg',
   disputes: '/images/Dispute_ResolutionLitigation.jpeg',
+  fam: '/images/Family_Law_Compassionate.jpg',
+  casesight: '/images/Milimani-law-courts.jpg',
   family: '/images/Family_Law_Compassionate_lega.jpeg',
   office: '/images/home-hero-banner.png',
+  founder: '/images/Sharon-Nyaera-Founder.jpg',
+  judiciaryke: '/images/Judiciary.jpg',
+  proenv: '/images/real-estate-law.jpg',		  
+  milicourts: '/images/Milimani-law-courtsv2.jpg',		
 };
 
 export const practiceAreas = [
@@ -64,7 +71,7 @@ export const practiceAreas = [
     title: 'Family Law & Succession',
     slug: 'family-law-succession',
     icon: Scale,
-    image: images.family,
+    image: images.fam,
     summary: 'Probate, estate planning, wills, administration, divorce, custody and maintenance matters handled with discretion.',
     services: ['Probate and administration', 'Estate planning', 'Wills drafting', 'Divorce matters', 'Child custody', 'Maintenance matters'],
   },
@@ -79,9 +86,9 @@ export const practiceAreas = [
 ];
 
 export const teamMembers = [
-  { name: 'Nyaera Ogega', role: 'Founding Partner', focus: 'Real estate, conveyancing, commercial advisory and dispute resolution.', image: images.office },
-  { name: 'Associate Advocate', role: 'Property & Transactions', focus: 'Due diligence, transfers, leases and sectional property documentation.', image: images.signing },
-  { name: 'Legal Consultant', role: 'Corporate & Compliance', focus: 'Corporate governance, business structuring, contracts and regulatory support.', image: images.corporateAlt },
+  { name: 'Nyaera Ogega', role: 'Founding Partner', focus: 'Real estate, conveyancing, commercial advisory and dispute resolution.', image: images.founder },
+  { name: 'Associate Advocate', role: 'Property & Transactions', focus: 'Due diligence, transfers, leases and sectional property documentation.', image: images.milicourts },
+  { name: 'Legal Consultant', role: 'Corporate & Compliance', focus: 'Corporate governance, business structuring, contracts and regulatory support.', image: images.judiciaryke },
 ];
 
 export const caseResults = [
@@ -98,7 +105,7 @@ export const insights = [
 
 export const contact = {
   address: 'Shelter Afrique Building, Mamlaka Road, 3rd Floor, Room 4, Nairobi',
-  email: 'shelter.nyaera33@gmail.com',
+  email: 'info@nyaeraogegaadvocates.com',
   phone: '+254 791 646 341',
   whatsapp: 'https://wa.me/254791646341',
 };
