@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export function CTA() {
   return (
-    <section className="bg-white py-14 md:py-20">
+    <section className="bg-[#f6f7ff] py-14 md:py-5">
       <div className="site-container overflow-hidden rounded bg-[#2e3192] p-6 text-white shadow-2xl shadow-[#2e3192]/20 sm:p-10 md:p-14">
         <div className="grid gap-8 md:grid-cols-[1.3fr_.7fr] md:items-center">
           <div>

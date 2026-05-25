@@ -118,7 +118,7 @@ export default function ContactPage() {
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <div className="rounded-2xl bg-white/10 p-8 backdrop-blur-md border border-white/20">
             <h2 className="font-display text-2xl font-bold text-white">Nyaera Ogega & Co.</h2>
-            <p className="mt-1 text-white/70">Nairobi Headquarters</p>
+            <p className="mt-1 text-white/70">Shelter Afrique Building, Nairobi</p>
             <div className="mt-6 flex flex-col items-center">
               <div className="flex h-12 w-12 animate-bounce items-center justify-center rounded-full bg-[#ab812b] text-white shadow-lg">
                 <MapPin size={24} />

@@ -86,7 +86,7 @@ export const practiceAreas = [
 ];
 
 export const teamMembers = [
-  { name: 'Nyaera Ogega', role: 'Founding Partner', focus: 'Real estate, conveyancing, commercial advisory and dispute resolution.', image: images.founder },
+  { name: 'Sharon Nyaera Ogega', role: 'Founding Partner', focus: 'Real estate, conveyancing, commercial advisory and dispute resolution.', image: images.founder },
   { name: 'Associate Advocate', role: 'Property & Transactions', focus: 'Due diligence, transfers, leases and sectional property documentation.', image: images.milicourts },
   { name: 'Legal Consultant', role: 'Corporate & Compliance', focus: 'Corporate governance, business structuring, contracts and regulatory support.', image: images.judiciaryke },
 ];
