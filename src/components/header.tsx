@@ -10,14 +10,13 @@ import {
   X,
   Phone,
   ChevronDown,
-  Scale,
-  Hammer,
   BookOpen,
   Users,
   Newspaper,
   Briefcase,
   MessageSquare,
   Mail,
+  Scale,
 } from "lucide-react";
 
 import {
@@ -26,18 +25,19 @@ import {
   FaLinkedinIn,
 } from "react-icons/fa";
 
+import { practiceAreas } from '@/lib/site-data';
+
 const navLinks = [
   { href: '/', label: 'Home' },
-  { 
-    href: '/practice-areas', 
+  {
+    href: '/practice-areas',
     label: 'Practice Areas',
     icon: Scale,
-    children: [
-      { href: '/practice-areas#conveyancing', label: 'Conveyancing', icon: Hammer },
-      { href: '/practice-areas#real-estate', label: 'Real Estate', icon: Scale },
-      { href: '/practice-areas#commercial', label: 'Commercial Law', icon: Briefcase },
-      { href: '/practice-areas#dispute', label: 'Dispute Resolution', icon: BookOpen },
-    ]
+    children: practiceAreas.map((area) => ({
+      href: `/practice-areas#${area.slug}`,
+      label: area.title,
+      icon: area.icon,
+    })),
   },
   { href: '/case-results', label: 'Case Results', icon: BookOpen },
   { href: '/team', label: 'Our Team', icon: Users },
@@ -173,7 +173,7 @@ export function Header() {
 
                 {/* Dropdown */}
                 {link.children && activeDropdown === link.href && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 animate-slide-down">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 animate-slide-down">
                     <div className="rounded-xl border border-slate-100 bg-white p-2 shadow-2xl shadow-[#2e3192]/15">
                       {link.children.map((child) => (
                         <Link
