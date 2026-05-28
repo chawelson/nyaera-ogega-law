@@ -1,9 +1,24 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Mail, MapPin, Phone, Clock, MapPinned, MessageCircle } from 'lucide-react';
 import { PageHero } from '@/components/page-hero';
-import { contact } from '@/lib/site-data';
+import { contact, siteUrl } from '@/lib/site-data';
 import { ContactForm } from './ContactForm';
+
+export const metadata: Metadata = {
+  title: 'Contact Us — Book a Legal Consultation',
+  description:
+    'Get in touch with our legal team at Shelter Afrique Building, Mamlaka Road, Nairobi. Call, email or WhatsApp — we respond within 24 hours.',
+  alternates: { canonical: `${siteUrl}/contact` },
+  openGraph: {
+    title: 'Contact Us | Nyaera Ogega & Co. Advocates',
+    description:
+      'Get in touch with our legal team in Nairobi. Call, email or WhatsApp — we respond within 24 hours.',
+    url: `${siteUrl}/contact`,
+    images: [{ url: '/images/Main-HomeBanner-Herrolegal_office.jpeg', width: 1200, height: 630, alt: 'Contact Nyaera Ogega & Co.' }],
+  },
+};
 
 export default function ContactPage() {
   return (

@@ -1,9 +1,24 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 import { PageHero } from '@/components/page-hero';
 import { CTA } from '@/components/cta';
-import { practiceAreas, contact } from '@/lib/site-data';
+import { practiceAreas, contact, siteUrl } from '@/lib/site-data';
+
+export const metadata: Metadata = {
+  title: 'Legal Practice Areas | Real Estate, Commercial Law & More',
+  description:
+    'Expert legal services in real estate & conveyancing, commercial law, civil litigation, employment, family law and legal compliance in Kenya. Nyaera Ogega & Co. Advocates, Nairobi.',
+  alternates: { canonical: `${siteUrl}/practice-areas` },
+  openGraph: {
+    title: 'Legal Practice Areas | Nyaera Ogega & Co. Advocates',
+    description:
+      'Expert legal services in real estate, conveyancing, commercial law, civil litigation, employment, family law and compliance in Kenya.',
+    url: `${siteUrl}/practice-areas`,
+    images: [{ url: '/images/Conveyancing_Real_Estate.jpeg', width: 1200, height: 630, alt: 'Legal Practice Areas — Nyaera Ogega & Co.' }],
+  },
+};
 import {
   Accordion,
   AccordionContent,

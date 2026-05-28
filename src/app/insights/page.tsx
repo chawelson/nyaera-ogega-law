@@ -1,7 +1,22 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { PageHero } from '@/components/page-hero';
 import { CTA } from '@/components/cta';
-import { insights } from '@/lib/site-data';
+import { insights, siteUrl } from '@/lib/site-data';
+
+export const metadata: Metadata = {
+  title: 'Legal Insights — Property, Commercial & Kenyan Law Updates',
+  description:
+    'Practical legal articles on Kenyan property law, conveyancing, commercial transactions and business compliance. Published by Nyaera Ogega & Co. Advocates, Nairobi.',
+  alternates: { canonical: `${siteUrl}/insights` },
+  openGraph: {
+    title: 'Legal Insights | Nyaera Ogega & Co. Advocates',
+    description:
+      'Practical legal articles on Kenyan property law, conveyancing, commercial transactions and business compliance.',
+    url: `${siteUrl}/insights`,
+    images: [{ url: '/images/Conveyancing_Real_Estate.jpeg', width: 1200, height: 630, alt: 'Legal Insights — Nyaera Ogega & Co.' }],
+  },
+};
 
 export default function InsightsPage() {
   return (

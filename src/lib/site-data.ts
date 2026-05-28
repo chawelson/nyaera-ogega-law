@@ -1,5 +1,7 @@
 import { BriefcaseBusiness, Building2, Gavel, Handshake, Landmark, Scale, ShieldCheck, UsersRound, FileSearch, MessagesSquare, Lightbulb, Trophy } from 'lucide-react';
 
+export const siteUrl = 'https://nyaera-ogega-law.vercel.app';
+
 export const brand = {
   blue: '#2e3192',
   gold: '#ab812b',

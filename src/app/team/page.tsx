@@ -1,7 +1,22 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { PageHero } from '@/components/page-hero';
 import { CTA } from '@/components/cta';
-import { teamMembers } from '@/lib/site-data';
+import { teamMembers, siteUrl } from '@/lib/site-data';
+
+export const metadata: Metadata = {
+  title: 'Our Legal Team',
+  description:
+    'Meet the advocates and legal consultants at Nyaera Ogega & Co. — experienced, responsive professionals delivering expert legal services across Kenya.',
+  alternates: { canonical: `${siteUrl}/team` },
+  openGraph: {
+    title: 'Our Legal Team | Nyaera Ogega & Co. Advocates',
+    description:
+      'Meet the advocates and legal consultants at Nyaera Ogega & Co. — experienced professionals serving clients across Kenya.',
+    url: `${siteUrl}/team`,
+    images: [{ url: '/images/Sharon-Nyaera-Founder.jpg', width: 1200, height: 630, alt: 'Nyaera Ogega & Co. Legal Team' }],
+  },
+};
 
 export default function TeamPage() {
   return (

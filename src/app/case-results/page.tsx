@@ -1,7 +1,22 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { PageHero } from '@/components/page-hero';
 import { CTA } from '@/components/cta';
-import { caseResults, images } from '@/lib/site-data';
+import { caseResults, images, siteUrl } from '@/lib/site-data';
+
+export const metadata: Metadata = {
+  title: 'Case Results',
+  description:
+    'Selected legal outcomes from Nyaera Ogega & Co. — property transactions, commercial dispute resolution, conveyancing mandates and advisory work across Kenya.',
+  alternates: { canonical: `${siteUrl}/case-results` },
+  openGraph: {
+    title: 'Case Results | Nyaera Ogega & Co. Advocates',
+    description:
+      'Selected legal outcomes — property transactions, commercial dispute resolution and conveyancing mandates handled by Nyaera Ogega & Co.',
+    url: `${siteUrl}/case-results`,
+    images: [{ url: '/images/court-of-appeal.jpeg', width: 1200, height: 630, alt: 'Case Results — Nyaera Ogega & Co.' }],
+  },
+};
 
 export default function CaseResultsPage() {
   return (

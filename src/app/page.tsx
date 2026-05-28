@@ -1,8 +1,23 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Quote, Star } from 'lucide-react';
 import { CTA } from '@/components/cta';
-import { images, insights, practiceAreas, process, stats, testimonials, values, whyUs } from '@/lib/site-data';
+import { images, insights, practiceAreas, process, stats, testimonials, values, whyUs, siteUrl } from '@/lib/site-data';
+
+export const metadata: Metadata = {
+  title: 'Nyaera Ogega & Co. Advocates | Legal Advisors in Nairobi, Kenya',
+  description:
+    'Trusted advocates in Nairobi specialising in real estate, conveyancing, commercial law, civil litigation, employment and family law. Book a consultation today.',
+  alternates: { canonical: siteUrl },
+  openGraph: {
+    title: 'Nyaera Ogega & Co. Advocates | Legal Advisors in Nairobi, Kenya',
+    description:
+      'Trusted advocates in Nairobi specialising in real estate, conveyancing, commercial law, civil litigation, employment and family law.',
+    url: siteUrl,
+    images: [{ url: '/images/Main-HomeBanner-Herrolegal_office.jpeg', width: 1200, height: 630, alt: 'Nyaera Ogega & Co. Advocates' }],
+  },
+};
 
 export default function HomePage() {
   return (

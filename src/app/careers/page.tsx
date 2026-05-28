@@ -1,6 +1,21 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { PageHero } from '@/components/page-hero';
-import { contact, images } from '@/lib/site-data';
+import { contact, images, siteUrl } from '@/lib/site-data';
+
+export const metadata: Metadata = {
+  title: 'Careers — Join Our Legal Team',
+  description:
+    'Explore career opportunities at Nyaera Ogega & Co. Advocates in Nairobi. We welcome talented advocates, legal consultants and support professionals committed to excellence.',
+  alternates: { canonical: `${siteUrl}/careers` },
+  openGraph: {
+    title: 'Careers | Nyaera Ogega & Co. Advocates',
+    description:
+      'Explore career opportunities at a modern, commercially focused law firm in Nairobi. We welcome talented advocates and legal professionals.',
+    url: `${siteUrl}/careers`,
+    images: [{ url: '/images/Nairobi_skyline_view.jpeg', width: 1200, height: 630, alt: 'Careers at Nyaera Ogega & Co.' }],
+  },
+};
 
 export default function CareersPage() {
   return (
