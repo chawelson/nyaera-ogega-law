@@ -230,7 +230,7 @@ export default function HomePage() {
               href="/contact"
               className="mt-8 inline-flex items-center gap-2 rounded bg-[#ab812b] px-6 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-[#2e3192]"
             >
-              Get in Touch <ArrowRight size={16} />
+              Get in Touch. <ArrowRight size={16} />
             </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
