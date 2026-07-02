@@ -2,10 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, FileText, Scale, Shield, Building, Gavel, Landmark, BookOpen, Briefcase, Lock, Download } from 'lucide-react';
-import path from 'node:path';
-import Database from 'better-sqlite3';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import { PrismaClient } from '@/generated/prisma/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -126,16 +122,16 @@ interface DocumentData {
   filePath: string;
 }
 
-async function getDocument(slug: string): Promise<DocumentData | null> {
+function getDocument(slug: string): DocumentData | null {
   // Debug logging
   console.log('🔍 Looking for slug:', slug);
   console.log('📋 Available slugs:', Object.keys(sampleDocuments));
   const sampleDoc = sampleDocuments[slug];
   console.log('📄 Sample doc found:', sampleDoc ? 'YES' : 'NO');
 
-  // First check if slug exists in sample data keys (bypass Prisma for testing)
+  // Check if slug exists in sample data keys
   if (sampleDoc) {
-    console.log('✅ Returning sample data directly for slug:', slug);
+    console.log('✅ Returning sample data for slug:', slug);
     return sampleDoc;
   }
 
@@ -146,48 +142,7 @@ async function getDocument(slug: string): Promise<DocumentData | null> {
     return sampleBySlug;
   }
 
-  const dbUrl = process.env.DATABASE_URL || 'file:./prisma/dev.db';
-  const dbPath = dbUrl.replace(/^file:/, '');
-  const resolvedPath = path.resolve(process.cwd(), dbPath);
-
-  let connection;
-  let adapter;
-  let prisma;
-
-  try {
-    connection = new Database(resolvedPath);
-    adapter = new PrismaBetterSqlite3({ url: resolvedPath });
-    prisma = new PrismaClient({ adapter });
-
-    const document = await prisma.document.findUnique({
-      where: { slug },
-    });
-
-    console.log('📦 Prisma result:', document ? 'Found' : 'Not found');
-
-    await prisma.$disconnect();
-
-    if (document) {
-      return {
-        title: document.title,
-        slug: document.slug,
-        category: document.category,
-        previewText: document.previewText,
-        price: document.price,
-        filePath: document.filePath,
-      };
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Failed to fetch document:', error);
-    if (prisma) {
-      await prisma.$disconnect();
-    }
-
-    // Fall back to sample data
-    return sampleDocuments[slug] || null;
-  }
+  return null;
 }
 
 export async function generateMetadata({
@@ -197,7 +152,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
-  const doc = await getDocument(decodedSlug);
+  const doc = getDocument(decodedSlug);
 
   if (!doc) {
     return {
@@ -226,7 +181,7 @@ export default async function DocumentPreviewPage({
 }) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
-  const doc = await getDocument(decodedSlug);
+  const doc = getDocument(decodedSlug);
 
   if (!doc) {
     notFound();
@@ -322,19 +277,16 @@ export default async function DocumentPreviewPage({
 
             {/* Action buttons */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <form action={async () => {
-                'use server';
-                console.log('Checkout flow coming soon');
-              }}>
-                <Button
-                  size="lg"
-                  type="submit"
-                  className="bg-[#2e3192] text-white hover:bg-[#ab812b] cursor-pointer"
-                >
+              <Button
+                size="lg"
+                className="bg-[#2e3192] text-white hover:bg-[#ab812b] cursor-pointer"
+                asChild
+              >
+                <Link href="/documents">
                   <Download size={16} />
                   Download Full Document
-                </Button>
-              </form>
+                </Link>
+              </Button>
 
               <Button
                 variant="outline"
