@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowRight, FileText, Scale, Shield, Building, Gavel, Landmark, BookOpen, Briefcase, Lock, Download } from 'lucide-react';
+import { ArrowRight, FileText, Scale, Shield, Building, Gavel, Landmark, BookOpen, Briefcase, Lock, CheckCircle, Star, Download, Users, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { siteUrl } from '@/lib/site-data';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@/generated/prisma/client';
+import { AddToCartButton } from '@/components/add-to-cart-button';
+import { PreviewPageClient } from './preview-page-client';
 
 // ── Fallback sample data (used when DB is unreachable) ──────────────
 const sampleDocuments: Record<string, {
@@ -178,6 +179,13 @@ async function getDocument(slug: string): Promise<DocumentData | null> {
   return null;
 }
 
+// ── Get related documents (excluding current) ──────────────────────
+function getRelatedDocuments(currentSlug: string, count: number = 3): DocumentData[] {
+  return Object.values(sampleDocuments)
+    .filter(d => d.slug !== currentSlug)
+    .slice(0, count);
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -220,35 +228,77 @@ export default async function DocumentPreviewPage({
     notFound();
   }
 
+  const relatedDocs = getRelatedDocuments(decodedSlug, 3);
+
   return (
     <>
       {/* ===================== HERO / BREADCRUMB ===================== */}
-      <section className="relative isolate overflow-hidden bg-[#090d3f] py-16 md:py-20 lg:py-24 text-white">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#090d3f]/95 via-[#2e3192]/80 to-[#090d3f]/90" />
-        <div className="absolute inset-0 -z-10 bg-grid opacity-25" />
+      <section className="relative isolate overflow-hidden bg-[#090d3f] py-20 md:py-28 lg:py-32 text-white">
+        {/* Dramatic gradient overlay */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#090d3f] via-[#1a1d6e] to-[#2e3192]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,rgba(171,129,43,0.2),transparent_50%)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_left,rgba(46,49,146,0.4),transparent_50%)]" />
 
-        <div className="site-container">
-          <nav className="mb-6 flex items-center gap-2 text-sm font-medium">
-            <Link href="/" className="text-white/70 hover:text-[#ab812b] transition-colors">
+        {/* Decorative grid */}
+        <div
+          className="absolute inset-0 -z-10 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+
+        <div className="site-container relative z-10">
+          {/* Breadcrumbs */}
+          <nav className="mb-8 flex items-center gap-2.5 text-sm font-medium">
+            <Link href="/" className="text-white/60 hover:text-[#f0c675] transition-colors">
               Home
             </Link>
-            <span className="text-white/30 select-none">{'>'}</span>
-            <Link href="/documents" className="text-white/70 hover:text-[#ab812b] transition-colors">
+            <span className="text-white/20 select-none">›</span>
+            <Link href="/documents" className="text-white/60 hover:text-[#f0c675] transition-colors">
               Documents
             </Link>
-            <span className="text-white/30 select-none">{'>'}</span>
-            <span className="text-white truncate max-w-[200px] sm:max-w-xs">{doc.title}</span>
+            <span className="text-white/20 select-none">›</span>
+            <span className="text-white/80 truncate max-w-[200px] sm:max-w-xs">{doc.title}</span>
           </nav>
 
           <div className="max-w-3xl">
-            <div className="mb-6 inline-flex rounded border border-[#ab812b]/40 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-[#f0c675] backdrop-blur">
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#ab812b]/40 bg-white/10 px-5 py-2 text-xs font-black uppercase tracking-[.18em] text-[#f0c675] backdrop-blur-md">
+              <Sparkles size={14} />
               Premium Legal Document
             </div>
+
+            {/* Title */}
             <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
               {doc.title}
             </h1>
+
+            {/* Trust badges */}
+            <div className="mt-6 flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-2 text-white/70">
+                <CheckCircle size={16} className="text-emerald-400" />
+                <span>Instant Access</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/70">
+                <Download size={16} className="text-emerald-400" />
+                <span>Secure Download</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/70">
+                <Shield size={16} className="text-emerald-400" />
+                <span>Legal Guarantee</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/70">
+                <Users size={16} className="text-emerald-400" />
+                <span>Purchased by 10+ clients</span>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#f6f7ff] to-transparent z-10" />
       </section>
 
       {/* ===================== DOCUMENT DETAILS ===================== */}
@@ -267,20 +317,28 @@ export default async function DocumentPreviewPage({
                 {doc.category}
               </Badge>
 
-              <div className="flex items-center gap-2">
-                <span className="font-display text-2xl font-bold text-[#ab812b]">
-                  {formatPrice(doc.price)}
-                </span>
-                <span className="rounded bg-[#ab812b]/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#ab812b]">
+              {/* Price display - prominent */}
+              <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-[#ab812b]/15 to-[#f0c675]/10 border border-[#ab812b]/20 px-4 py-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[#ab812b] uppercase tracking-wider">KES</span>
+                  <span className="font-display text-2xl font-bold text-[#2e3192]">
+                    {doc.price.toLocaleString('en-KE')}
+                  </span>
+                </div>
+                <span className="h-6 w-px bg-[#ab812b]/20" />
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  <Star size={12} className="fill-emerald-500 text-emerald-500" />
                   Premium
                 </span>
               </div>
             </div>
 
             {/* Preview text */}
-            <Card className="mb-8 border border-slate-200 bg-white shadow-sm">
+            <Card className="mb-8 border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="h-1.5 bg-gradient-to-r from-[#ab812b] via-[#f0c675] to-[#ab812b]" />
               <CardContent className="p-6 md:p-8">
-                <h2 className="mb-4 font-display text-lg font-bold text-[#2e3192]">
+                <h2 className="mb-4 font-display text-lg font-bold text-[#2e3192] flex items-center gap-2">
+                  <FileText size={20} className="text-[#ab812b]" />
                   Document Preview
                 </h2>
                 <p className="leading-relaxed text-slate-700 whitespace-pre-line">
@@ -289,11 +347,12 @@ export default async function DocumentPreviewPage({
               </CardContent>
             </Card>
 
-            {/* Preview notice */}
-            <Card className="mb-8 border-2 border-amber-200 bg-amber-50 shadow-sm">
+            {/* Preview notice - more visually distinct */}
+            <Card className="mb-8 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50 shadow-sm overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-amber-400 to-amber-600" />
               <CardContent className="flex items-start gap-4 p-5 md:p-6">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
-                  <Lock size={18} className="text-amber-600" />
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-amber-100 border-2 border-amber-200">
+                  <Lock size={20} className="text-amber-600" />
                 </div>
                 <div>
                   <h3 className="font-display text-base font-bold text-amber-800">
@@ -309,51 +368,121 @@ export default async function DocumentPreviewPage({
             </Card>
 
             {/* Action buttons */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Button
-                size="lg"
-                className="bg-[#2e3192] text-white hover:bg-[#ab812b] cursor-pointer"
-                asChild
-              >
-                <Link href="/documents">
-                  <Download size={16} />
-                  Download Full Document
-                </Link>
-              </Button>
+            <AddToCartButton
+              id={0}
+              title={doc.title}
+              slug={doc.slug}
+              category={doc.category}
+              price={doc.price}
+              variant="preview"
+            />
 
-              <Button
-                variant="outline"
-                size="lg"
-                asChild
-                className="border-slate-300 text-slate-700 hover:bg-slate-100"
-              >
-                <Link href="/documents">
-                  <ArrowLeft size={16} />
-                  Back to Documents
-                </Link>
-              </Button>
+            {/* Social proof */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="size-8 rounded-full border-2 border-white bg-gradient-to-br from-[#2e3192] to-[#ab812b] flex items-center justify-center text-[10px] font-bold text-white"
+                    >
+                      {['JS', 'MK', 'AN'][i - 1]}
+                    </div>
+                  ))}
+                </div>
+                <span>Joined by <strong className="text-slate-700">10+</strong> clients</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
+                ))}
+                <span className="ml-1"><strong className="text-slate-700">4.9</strong> (24 reviews)</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* ===================== RELATED DOCUMENTS ===================== */}
+      {relatedDocs.length > 0 && (
+        <section className="bg-white py-16 border-t border-slate-100">
+          <div className="site-container">
+            <div className="text-center mb-10">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#ab812b]/20 bg-[#ab812b]/5 px-5 py-2 text-xs font-black uppercase tracking-[.18em] text-[#ab812b]">
+                <BookOpen size={14} />
+                You Might Also Like
+              </div>
+              <h2 className="font-display text-2xl font-bold text-[#090d3f] sm:text-3xl">
+                Related Documents
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedDocs.map((related, i) => (
+                <Link
+                  key={related.slug}
+                  href={`/documents/${related.slug}`}
+                  className="group block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                >
+                  <Badge
+                    variant="outline"
+                    className={`gap-1.5 border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider mb-3 ${
+                      categoryColors[related.category] || 'bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    {categoryIcons[related.category] || <FileText size={12} />}
+                    {related.category}
+                  </Badge>
+                  <h3 className="font-display text-base font-bold text-[#2e3192] group-hover:text-[#ab812b] transition-colors line-clamp-2">
+                    {related.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-500 line-clamp-2">
+                    {related.previewText}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 rounded-md bg-[#ab812b]/10 px-2.5 py-1">
+                      <span className="text-[10px] font-bold text-[#ab812b]">KES</span>
+                      <span className="font-display text-sm font-bold text-[#2e3192]">
+                        {related.price.toLocaleString('en-KE')}
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-[#ab812b] group-hover:translate-x-1 transition-transform">
+                      View Details →
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ===================== CTA ===================== */}
-      <section className="bg-[#0b1026] py-16 text-white md:py-20">
+      <section className="bg-gradient-to-r from-[#090d3f] to-[#2e3192] py-16 md:py-20 text-white">
         <div className="site-container text-center">
           <h2 className="font-display text-3xl font-bold sm:text-4xl">
             Need a custom legal document?
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-white/75">
+          <p className="mx-auto mt-4 max-w-2xl text-white/70">
             Our legal team can draft bespoke documents tailored to your specific needs. Get in touch for a consultation.
           </p>
           <Link
             href="/contact"
-            className="mt-8 inline-flex items-center gap-2 rounded bg-[#ab812b] px-8 py-3.5 text-sm font-bold text-white transition hover:bg-white hover:text-[#2e3192]"
+            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#ab812b] px-8 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:bg-white hover:text-[#2e3192] hover:shadow-lg"
           >
             Contact Us <ArrowRight size={16} />
           </Link>
         </div>
       </section>
+
+      {/* ===================== STICKY MOBILE CTA ===================== */}
+      <PreviewPageClient
+        id={0}
+        title={doc.title}
+        slug={doc.slug}
+        category={doc.category}
+        price={doc.price}
+      />
     </>
   );
 }

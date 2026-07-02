@@ -17,6 +17,8 @@ import {
   MessageSquare,
   Mail,
   Scale,
+  ShoppingCart,
+  ShoppingBag,
 } from "lucide-react";
 
 import {
@@ -26,6 +28,8 @@ import {
 } from "react-icons/fa";
 
 import { practiceAreas } from '@/lib/site-data';
+import { useCart } from '@/lib/cart-context';
+import { CartDrawer } from '@/components/cart-drawer';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -50,7 +54,9 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
   const pathname = usePathname();
+  const { itemCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -131,14 +137,31 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Mobile Toggle Button */}
-          <button
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-[#2e3192]"
-            aria-label="Toggle menu"
-          >
-            {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          {/* Right side: Cart + Mobile Toggle */}
+          <div className="flex items-center gap-3">
+            {/* Cart Button */}
+            <button
+              onClick={() => setCartOpen(true)}
+              className="relative flex items-center justify-center size-10 rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-[#2e3192]"
+              aria-label={`Shopping cart with ${itemCount} items`}
+            >
+              <ShoppingCart size={20} />
+              {itemCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-[#ab812b] text-[10px] font-bold text-white px-1">
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
+              )}
+            </button>
+
+            {/* Mobile Toggle Button */}
+            <button
+              onClick={() => setIsMobileOpen(!isMobileOpen)}
+              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-[#2e3192]"
+              aria-label="Toggle menu"
+            >
+              {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -190,6 +213,19 @@ export function Header() {
                 )}
               </div>
             ))}
+
+            {/* My Purchases Link in Nav */}
+            <Link
+              href="/my-purchases"
+              className={`flex items-center gap-2 rounded-lg px-5 py-3 text-[15px] font-bold transition-all duration-300 ${
+                isActive('/my-purchases')
+                  ? 'text-[#2e3192] bg-[#2e3192]/5'
+                  : 'text-slate-600 hover:text-[#2e3192] hover:bg-slate-50'
+              }`}
+            >
+              <ShoppingBag size={16} />
+              My Purchases
+            </Link>
           </nav>
         </div>
 
@@ -226,6 +262,20 @@ export function Header() {
                   )}
                 </div>
               ))}
+
+              {/* My Purchases in Mobile */}
+              <Link
+                href="/my-purchases"
+                className={`flex items-center gap-3 rounded-lg px-4 py-3.5 text-sm font-semibold transition-colors ${
+                  isActive('/my-purchases')
+                    ? 'bg-[#2e3192]/5 text-[#2e3192]'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-[#2e3192]'
+                }`}
+              >
+                <ShoppingBag size={18} className="text-[#ab812b]" />
+                My Purchases
+              </Link>
+
               <div className="pt-4 mt-4 border-t border-slate-100">
                 <Link 
                   href="/contact" 
@@ -238,6 +288,9 @@ export function Header() {
           </div>
         )}
       </header>
+
+      {/* Cart Drawer */}
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }

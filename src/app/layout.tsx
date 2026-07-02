@@ -5,6 +5,7 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/sonner';
 import { JsonLd } from '@/components/JsonLd';
+import { Providers } from '@/components/providers';
 import { siteUrl } from '@/lib/site-data';
 
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair', display: 'swap' });
@@ -81,10 +82,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <JsonLd />
       </head>
       <body className={`${playfair.variable} ${jakarta.variable} antialiased`}>
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <Toaster />
+        <Providers>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

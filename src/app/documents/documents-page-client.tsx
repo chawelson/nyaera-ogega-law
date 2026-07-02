@@ -22,12 +22,15 @@ import {
   Users,
   Award,
   Clock,
+  ShoppingCart,
+  Check,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useCart } from '@/lib/cart-context';
 import type { DocumentItem } from './page';
 
 // ── Badge assignments ───────────────────────────────────────────────
@@ -181,6 +184,8 @@ export default function DocumentsPageClient({ documents }: Props) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const { addItem, items } = useCart();
+  const [addedItems, setAddedItems] = useState<Record<number, boolean>>({});
 
   // Scroll-to-top button visibility
   useEffect(() => {
@@ -465,24 +470,61 @@ export default function DocumentsPageClient({ documents }: Props) {
                           </p>
                         </CardContent>
 
-                        <CardFooter className="border-t border-slate-100 pt-4 flex items-center justify-between">
-                          {/* Gradient price tag */}
-                          <div className="relative">
-                            <span className="font-display text-lg font-bold bg-gradient-to-r from-[#ab812b] to-[#f0c675] bg-clip-text text-transparent">
-                              {formatPrice(doc.price)}
-                            </span>
+                        <CardFooter className="border-t border-slate-100 pt-4 flex flex-col gap-3">
+                          {/* Top row: price + preview */}
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2 rounded-lg bg-[#ab812b]/10 px-3 py-1.5">
+                              <span className="text-xs font-bold text-[#ab812b]">KES</span>
+                              <span className="font-display text-xl font-bold text-[#2e3192]">
+                                {doc.price.toLocaleString('en-KE')}
+                              </span>
+                            </div>
+
+                            <Link
+                              href={`/documents/${doc.slug}`}
+                              className="inline-flex items-center gap-2 text-sm font-bold text-[#2e3192] hover:text-[#ab812b] transition-colors group/link"
+                            >
+                              Preview Document
+                              <ArrowRight
+                                size={16}
+                                className="transition-transform duration-200 group-hover/link:translate-x-1"
+                              />
+                            </Link>
                           </div>
 
-                          <Link
-                            href={`/documents/${doc.slug}`}
-                            className="inline-flex items-center gap-2 text-sm font-bold text-[#2e3192] hover:text-[#ab812b] transition-colors group/link"
+                          {/* Add to Cart button */}
+                          <button
+                            onClick={() => {
+                              addItem({
+                                id: doc.id,
+                                title: doc.title,
+                                slug: doc.slug,
+                                category: doc.category,
+                                price: doc.price,
+                              });
+                              setAddedItems((prev) => ({ ...prev, [doc.id]: true }));
+                              setTimeout(() => {
+                                setAddedItems((prev) => ({ ...prev, [doc.id]: false }));
+                              }, 2000);
+                            }}
+                            className={`w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                              addedItems[doc.id]
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-[#2e3192] text-white hover:bg-[#ab812b]'
+                            }`}
                           >
-                            Preview Document
-                            <ArrowRight
-                              size={16}
-                              className="transition-transform duration-200 group-hover/link:translate-x-1"
-                            />
-                          </Link>
+                            {addedItems[doc.id] ? (
+                              <>
+                                <Check size={14} />
+                                Added to Cart
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart size={14} />
+                                Add to Cart
+                              </>
+                            )}
+                          </button>
                         </CardFooter>
                       </Card>
                     </motion.div>
