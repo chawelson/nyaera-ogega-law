@@ -6,27 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { siteUrl } from '@/lib/site-data';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@/generated/prisma/client';
 
-const categoryIcons: Record<string, React.ReactNode> = {
-  Conveyancing: <Building size={16} />,
-  Litigation: <Gavel size={16} />,
-  'Commercial Law': <Briefcase size={16} />,
-  'Employment Law': <Scale size={16} />,
-  'Family Law': <Shield size={16} />,
-  'Corporate Law': <Landmark size={16} />,
-  'Legal Guides': <BookOpen size={16} />,
-};
-
-const categoryColors: Record<string, string> = {
-  Conveyancing: 'bg-blue-100 text-blue-800 border-blue-200',
-  Litigation: 'bg-red-100 text-red-800 border-red-200',
-  'Commercial Law': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  'Employment Law': 'bg-purple-100 text-purple-800 border-purple-200',
-  'Family Law': 'bg-pink-100 text-pink-800 border-pink-200',
-  'Corporate Law': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  'Legal Guides': 'bg-amber-100 text-amber-800 border-amber-200',
-};
-
+// ── Fallback sample data (used when DB is unreachable) ──────────────
 const sampleDocuments: Record<string, {
   title: string;
   slug: string;
@@ -109,6 +92,26 @@ const sampleDocuments: Record<string, {
   },
 };
 
+const categoryIcons: Record<string, React.ReactNode> = {
+  Conveyancing: <Building size={16} />,
+  Litigation: <Gavel size={16} />,
+  'Commercial Law': <Briefcase size={16} />,
+  'Employment Law': <Scale size={16} />,
+  'Family Law': <Shield size={16} />,
+  'Corporate Law': <Landmark size={16} />,
+  'Legal Guides': <BookOpen size={16} />,
+};
+
+const categoryColors: Record<string, string> = {
+  Conveyancing: 'bg-blue-100 text-blue-800 border-blue-200',
+  Litigation: 'bg-red-100 text-red-800 border-red-200',
+  'Commercial Law': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  'Employment Law': 'bg-purple-100 text-purple-800 border-purple-200',
+  'Family Law': 'bg-pink-100 text-pink-800 border-pink-200',
+  'Corporate Law': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  'Legal Guides': 'bg-amber-100 text-amber-800 border-amber-200',
+};
+
 function formatPrice(price: number): string {
   return `KES ${price.toLocaleString('en-KE')}`;
 }
@@ -122,14 +125,44 @@ interface DocumentData {
   filePath: string;
 }
 
-function getDocument(slug: string): DocumentData | null {
-  // Debug logging
-  console.log('🔍 Looking for slug:', slug);
-  console.log('📋 Available slugs:', Object.keys(sampleDocuments));
-  const sampleDoc = sampleDocuments[slug];
-  console.log('📄 Sample doc found:', sampleDoc ? 'YES' : 'NO');
+// ── Database helper ─────────────────────────────────────────────────
+async function getDocumentFromDb(slug: string): Promise<DocumentData | null> {
+  const connectionString = process.env.DATABASE_URL!;
+  const adapter = new PrismaPg({ connectionString });
+  const prisma = new PrismaClient({ adapter });
 
-  // Check if slug exists in sample data keys
+  try {
+    const doc = await prisma.document.findUnique({
+      where: { slug },
+    });
+    if (!doc) return null;
+    return {
+      title: doc.title,
+      slug: doc.slug,
+      category: doc.category,
+      previewText: doc.previewText,
+      price: doc.price,
+      filePath: doc.filePath,
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function getDocument(slug: string): Promise<DocumentData | null> {
+  // Try database first
+  try {
+    const dbDoc = await getDocumentFromDb(slug);
+    if (dbDoc) {
+      console.log('✅ Loaded document from database:', slug);
+      return dbDoc;
+    }
+  } catch (err) {
+    console.warn('⚠️ Database unavailable for slug page, falling back to sample data:', err);
+  }
+
+  // Fallback to sample data
+  const sampleDoc = sampleDocuments[slug];
   if (sampleDoc) {
     console.log('✅ Returning sample data for slug:', slug);
     return sampleDoc;
@@ -152,7 +185,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
-  const doc = getDocument(decodedSlug);
+  const doc = await getDocument(decodedSlug);
 
   if (!doc) {
     return {
@@ -181,7 +214,7 @@ export default async function DocumentPreviewPage({
 }) {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
-  const doc = getDocument(decodedSlug);
+  const doc = await getDocument(decodedSlug);
 
   if (!doc) {
     notFound();

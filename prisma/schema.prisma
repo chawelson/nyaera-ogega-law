@@ -2,40 +2,41 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
+// Your Document and Purchase models stay the same
 model Document {
-  id          Int        @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   title       String
-  slug        String     @unique
+  slug        String   @unique
   category    String
-  previewText String     @map("preview_text")
+  previewText String   @map("preview_text")
   price       Float
-  filePath    String     @map("file_path")
-  status      String     @default("active")
-  createdAt   DateTime   @default(now()) @map("created_at")
+  filePath    String   @map("file_path")
+  status      String   @default("active")
+  createdAt   DateTime @default(now()) @map("created_at")
   purchases   Purchase[]
 
   @@map("documents")
 }
 
 model Purchase {
-  id            Int       @id @default(autoincrement())
-  documentId    Int       @map("document_id")
-  userPhone     String    @map("user_phone")
-  amount        Float
-  checkoutId    String    @unique @map("checkout_id")
-  status        String    @default("pending")
-  downloadToken String?   @unique @map("download_token")
-  tokenExpiry   DateTime? @map("token_expiry")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  document      Document  @relation(fields: [documentId], references: [id])
+  id           Int      @id @default(autoincrement())
+  documentId   Int
+  document     Document @relation(fields: [documentId], references: [id])
+  userPhone    String   @map("user_phone")
+  amount       Float
+  checkoutId   String   @unique @map("checkout_id")
+  status       String   @default("pending")
+  downloadToken String? @unique @map("download_token")
+  tokenExpiry  DateTime? @map("token_expiry")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("purchases")
 }

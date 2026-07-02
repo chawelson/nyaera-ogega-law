@@ -4,9 +4,11 @@ import { ArrowRight, Building, Gavel, Scale, Shield, Landmark, BookOpen, Briefca
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { siteUrl } from '@/lib/site-data';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@/generated/prisma/client';
 
-// Hardcoded sample documents (no database needed)
-const documents = [
+// ── Fallback sample data (used when DB is unreachable) ──────────────
+const sampleDocuments = [
   {
     id: 1,
     title: 'Sale Agreement — Land & Property Transfer',
@@ -99,6 +101,33 @@ const documents = [
   },
 ];
 
+// ── Database helper ─────────────────────────────────────────────────
+async function getDocumentsFromDb() {
+  const connectionString = process.env.DATABASE_URL!;
+  const adapter = new PrismaPg({ connectionString });
+  const prisma = new PrismaClient({ adapter });
+
+  try {
+    const docs = await prisma.document.findMany({
+      where: { status: 'active' },
+      orderBy: { price: 'desc' },
+    });
+    return docs.map((d) => ({
+      id: d.id,
+      title: d.title,
+      slug: d.slug,
+      category: d.category,
+      previewText: d.previewText,
+      price: d.price,
+      filePath: d.filePath,
+      status: d.status,
+    }));
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// ── Icons & colours ─────────────────────────────────────────────────
 const categoryIcons: Record<string, React.ReactNode> = {
   Conveyancing: <Building size={16} />,
   Litigation: <Gavel size={16} />,
@@ -129,8 +158,18 @@ export const metadata: Metadata = {
   alternates: { canonical: `${siteUrl}/documents` },
 };
 
-export default function DocumentsPage() {
-  const activeDocuments = documents.filter(d => d.status === 'active');
+export default async function DocumentsPage() {
+  let documents;
+
+  try {
+    documents = await getDocumentsFromDb();
+    console.log('✅ Loaded documents from database');
+  } catch (err) {
+    console.warn('⚠️ Database unavailable, using fallback sample data:', err);
+    documents = sampleDocuments;
+  }
+
+  const activeDocuments = documents.filter((d: { status: string }) => d.status === 'active');
 
   return (
     <>
@@ -156,7 +195,14 @@ export default function DocumentsPage() {
       <section className="bg-[#f6f7ff] py-12 md:py-16">
         <div className="site-container">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activeDocuments.map((doc) => (
+            {activeDocuments.map((doc: {
+              id: number;
+              title: string;
+              slug: string;
+              category: string;
+              previewText: string;
+              price: number;
+            }) => (
               <Card key={doc.id} className="overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
