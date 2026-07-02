@@ -1,20 +1,29 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowRight, Building, Gavel, Scale, Shield, Landmark, BookOpen, Briefcase, FileText } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { siteUrl } from '@/lib/site-data';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@/generated/prisma/client';
+import DocumentsPageClient from './documents-page-client';
 
-// ── Fallback sample data (used when DB is unreachable) ──────────────
-const sampleDocuments = [
+// ── Types ───────────────────────────────────────────────────────────
+export interface DocumentItem {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  previewText: string;
+  price: number;
+  filePath: string;
+  status: string;
+}
+
+// ── Fallback sample data ────────────────────────────────────────────
+const sampleDocuments: DocumentItem[] = [
   {
     id: 1,
     title: 'Sale Agreement — Land & Property Transfer',
     slug: 'sale-agreement-land-property-transfer',
     category: 'Conveyancing',
-    previewText: 'Comprehensive sale agreement for the transfer of land and property between parties...',
+    previewText: 'Comprehensive sale agreement for the transfer of land and property between parties, compliant with Kenyan land laws. Covers purchase price, deposit, completion date, representations and warranties.',
     price: 2500,
     filePath: '/documents/sale-agreement.pdf',
     status: 'active',
@@ -24,7 +33,7 @@ const sampleDocuments = [
     title: 'Lease Agreement — Commercial & Residential',
     slug: 'lease-agreement-commercial-residential',
     category: 'Conveyancing',
-    previewText: 'Standard lease agreement template covering commercial and residential tenancy terms...',
+    previewText: 'Standard lease agreement template covering commercial and residential tenancy terms under Kenyan law. Includes provisions for rent, security deposit, maintenance obligations.',
     price: 2000,
     filePath: '/documents/lease-agreement.pdf',
     status: 'active',
@@ -34,7 +43,7 @@ const sampleDocuments = [
     title: 'Employment Contract — Permanent & Fixed Term',
     slug: 'employment-contract-permanent-fixed-term',
     category: 'Employment Law',
-    previewText: 'Legally compliant employment contract template for permanent and fixed-term employees...',
+    previewText: 'Legally compliant employment contract template for permanent and fixed-term employees in Kenya. Covers job description, remuneration, working hours, leave entitlements.',
     price: 1800,
     filePath: '/documents/employment-contract.pdf',
     status: 'active',
@@ -44,7 +53,7 @@ const sampleDocuments = [
     title: 'Memorandum of Understanding (MoU) Template',
     slug: 'memorandum-of-understanding-mou',
     category: 'Commercial Law',
-    previewText: 'Professional MoU template for business partnerships, joint ventures...',
+    previewText: 'Professional MoU template for business partnerships, joint ventures, and collaborative agreements. Suitable for pre-contractual negotiations.',
     price: 1500,
     filePath: '/documents/mou-template.pdf',
     status: 'active',
@@ -54,7 +63,7 @@ const sampleDocuments = [
     title: 'Power of Attorney — General & Specific',
     slug: 'power-of-attorney-general-specific',
     category: 'Legal Guides',
-    previewText: 'Comprehensive power of attorney document granting authority...',
+    previewText: 'Comprehensive power of attorney document granting authority for general or specific legal matters. Includes property management, financial transactions, and legal proceedings.',
     price: 1200,
     filePath: '/documents/power-of-attorney.pdf',
     status: 'active',
@@ -64,7 +73,7 @@ const sampleDocuments = [
     title: 'Tenancy Notice — Landlord & Tenant',
     slug: 'tenancy-notice-landlord-tenant',
     category: 'Conveyancing',
-    previewText: 'Statutory notice templates for termination of tenancy...',
+    previewText: 'Statutory notice templates for termination of tenancy, rent arrears, and breach of covenant. Compliant with the Landlord and Tenant Act.',
     price: 1000,
     filePath: '/documents/tenancy-notice.pdf',
     status: 'active',
@@ -74,7 +83,7 @@ const sampleDocuments = [
     title: 'Company Incorporation Documents — Kenya',
     slug: 'company-incorporation-documents-kenya',
     category: 'Corporate Law',
-    previewText: 'Complete set of incorporation documents including Memorandum and Articles...',
+    previewText: 'Complete set of incorporation documents including Memorandum and Articles of Association for Kenyan companies. Compliant with the Companies Act 2015.',
     price: 3500,
     filePath: '/documents/company-incorporation.pdf',
     status: 'active',
@@ -84,7 +93,7 @@ const sampleDocuments = [
     title: 'Divorce Petition — Irretrievable Breakdown',
     slug: 'divorce-petition-irretrievable-breakdown',
     category: 'Family Law',
-    previewText: 'Divorce petition template based on irretrievable breakdown of marriage...',
+    previewText: 'Divorce petition template based on irretrievable breakdown of marriage under Kenyan family law. Covers custody, division of property, and child support.',
     price: 2200,
     filePath: '/documents/divorce-petition.pdf',
     status: 'active',
@@ -94,7 +103,7 @@ const sampleDocuments = [
     title: 'Civil Litigation — Plaint & Defence Templates',
     slug: 'civil-litigation-plaintiff-defendant',
     category: 'Litigation',
-    previewText: 'Standard plaint and statement of defence templates for civil proceedings...',
+    previewText: 'Standard plaint and statement of defence templates for civil proceedings in Kenyan courts. Suitable for both plaintiffs and defendants.',
     price: 2800,
     filePath: '/documents/civil-litigation-templates.pdf',
     status: 'active',
@@ -102,7 +111,7 @@ const sampleDocuments = [
 ];
 
 // ── Database helper ─────────────────────────────────────────────────
-async function getDocumentsFromDb() {
+async function getDocumentsFromDb(): Promise<DocumentItem[]> {
   const connectionString = process.env.DATABASE_URL!;
   const adapter = new PrismaPg({ connectionString });
   const prisma = new PrismaClient({ adapter });
@@ -127,31 +136,6 @@ async function getDocumentsFromDb() {
   }
 }
 
-// ── Icons & colours ─────────────────────────────────────────────────
-const categoryIcons: Record<string, React.ReactNode> = {
-  Conveyancing: <Building size={16} />,
-  Litigation: <Gavel size={16} />,
-  'Commercial Law': <Briefcase size={16} />,
-  'Employment Law': <Scale size={16} />,
-  'Family Law': <Shield size={16} />,
-  'Corporate Law': <Landmark size={16} />,
-  'Legal Guides': <BookOpen size={16} />,
-};
-
-const categoryColors: Record<string, string> = {
-  Conveyancing: 'bg-blue-100 text-blue-800 border-blue-200',
-  Litigation: 'bg-red-100 text-red-800 border-red-200',
-  'Commercial Law': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  'Employment Law': 'bg-purple-100 text-purple-800 border-purple-200',
-  'Family Law': 'bg-pink-100 text-pink-800 border-pink-200',
-  'Corporate Law': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  'Legal Guides': 'bg-amber-100 text-amber-800 border-amber-200',
-};
-
-function formatPrice(price: number): string {
-  return `KES ${price.toLocaleString('en-KE')}`;
-}
-
 export const metadata: Metadata = {
   title: 'Legal Document Marketplace | Nyaera Ogega & Co. Advocates',
   description: 'Browse and purchase premium legal document templates from Nyaera Ogega & Co. Advocates.',
@@ -159,7 +143,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DocumentsPage() {
-  let documents;
+  let documents: DocumentItem[];
 
   try {
     documents = await getDocumentsFromDb();
@@ -169,84 +153,7 @@ export default async function DocumentsPage() {
     documents = sampleDocuments;
   }
 
-  const activeDocuments = documents.filter((d: { status: string }) => d.status === 'active');
+  const activeDocuments = documents.filter((d) => d.status === 'active');
 
-  return (
-    <>
-      {/* Hero Section */}
-      <section className="relative isolate overflow-hidden bg-[#090d3f] py-16 md:py-20 lg:py-24 text-white">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#090d3f]/95 via-[#2e3192]/80 to-[#090d3f]/90" />
-        <div className="site-container">
-          <div className="max-w-3xl">
-            <div className="mb-6 inline-flex rounded border border-[#ab812b]/40 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-[#f0c675] backdrop-blur">
-              Document Marketplace
-            </div>
-            <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-              Premium Legal Documents
-            </h1>
-            <p className="mt-4 text-lg text-white/80">
-              Browse our collection of professionally drafted legal document templates. Preview before you purchase.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Document Grid */}
-      <section className="bg-[#f6f7ff] py-12 md:py-16">
-        <div className="site-container">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activeDocuments.map((doc: {
-              id: number;
-              title: string;
-              slug: string;
-              category: string;
-              previewText: string;
-              price: number;
-            }) => (
-              <Card key={doc.id} className="overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <Badge
-                      variant="outline"
-                      className={`gap-1.5 border px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${
-                        categoryColors[doc.category] || 'bg-slate-100 text-slate-700 border-slate-200'
-                      }`}
-                    >
-                      {categoryIcons[doc.category] || <FileText size={14} />}
-                      {doc.category}
-                    </Badge>
-                    <span className="font-display text-lg font-bold text-[#ab812b]">
-                      {formatPrice(doc.price)}
-                    </span>
-                  </div>
-                  <CardTitle className="text-lg font-bold text-[#2e3192] line-clamp-2">
-                    {doc.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-3">
-                  <p className="text-sm text-slate-600 line-clamp-3">
-                    {doc.previewText}
-                  </p>
-                </CardContent>
-                <CardFooter className="border-t border-slate-100 pt-4">
-                  <Link
-                    href={`/documents/${doc.slug}`}
-                    className="inline-flex items-center gap-2 text-sm font-bold text-[#2e3192] hover:text-[#ab812b] transition-colors"
-                  >
-                    Preview Document <ArrowRight size={16} />
-                  </Link>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-
-          {activeDocuments.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-slate-500">No documents available at this time.</p>
-            </div>
-          )}
-        </div>
-      </section>
-    </>
-  );
+  return <DocumentsPageClient documents={activeDocuments} />;
 }
