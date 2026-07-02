@@ -70,7 +70,7 @@ const sampleDocuments = [
   },
   {
     title: 'Memorandum of Understanding (MoU) Template',
-    slug: 'memorandum-of-understanding-template',
+    slug: 'memorandum-of-understanding-mou',
     category: 'Commercial Law',
     previewText: 'Professional MoU template for business partnerships, joint ventures, and collaborative agreements.',
     price: 1500,
@@ -110,7 +110,7 @@ const sampleDocuments = [
   },
   {
     title: 'Civil Litigation — Plaint & Defence Templates',
-    slug: 'civil-litigation-plaint-defence-templates',
+    slug: 'civil-litigation-plaintiff-defendant',
     category: 'Litigation',
     previewText: 'Standard plaint and statement of defence templates for civil proceedings in Kenyan courts.',
     price: 2800,
@@ -236,7 +236,7 @@ export default async function DocumentsPage() {
 
                 <CardFooter className="border-t border-slate-100 bg-transparent pt-4">
                   <Link
-                    href={`/documents/${doc.slug}`}
+                    href={`/documents/${encodeURIComponent(doc.slug)}`}
                     className="group inline-flex w-full items-center justify-center gap-2 rounded bg-[#2e3192] px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#ab812b]"
                   >
                     Preview Document

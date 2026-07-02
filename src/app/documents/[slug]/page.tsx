@@ -63,11 +63,11 @@ const sampleDocuments: Record<string, {
     price: 1800,
     filePath: '/documents/employment-contract.pdf',
   },
-  'memorandum-of-understanding-template': {
+  'memorandum-of-understanding-mou': {
     title: 'Memorandum of Understanding (MoU) Template',
-    slug: 'memorandum-of-understanding-template',
+    slug: 'memorandum-of-understanding-mou',
     category: 'Commercial Law',
-    previewText: 'Professional MoU template for business partnerships, joint ventures, and collaborative agreements. Outlines the terms of understanding between parties including scope of collaboration, resource contributions, intellectual property rights, confidentiality, and dispute resolution.',
+    previewText: 'Professional MoU template for business partnerships, joint ventures, and collaborative agreements.',
     price: 1500,
     filePath: '/documents/mou-template.pdf',
   },
@@ -103,11 +103,11 @@ const sampleDocuments: Record<string, {
     price: 2200,
     filePath: '/documents/divorce-petition.pdf',
   },
-  'civil-litigation-plaint-defence-templates': {
+  'civil-litigation-plaintiff-defendant': {
     title: 'Civil Litigation — Plaint & Defence Templates',
-    slug: 'civil-litigation-plaint-defence-templates',
+    slug: 'civil-litigation-plaintiff-defendant',
     category: 'Litigation',
-    previewText: 'Standard plaint and statement of defence templates for civil proceedings in Kenyan courts. Includes general form of plaint, defence, counterclaim, and reply. Suitable for use in the Magistrates\' Courts, High Court, and Court of Appeal under the Civil Procedure Rules 2010.',
+    previewText: 'Standard plaint and statement of defence templates for civil proceedings in Kenyan courts.',
     price: 2800,
     filePath: '/documents/civil-litigation-templates.pdf',
   },
@@ -127,36 +127,63 @@ interface DocumentData {
 }
 
 async function getDocument(slug: string): Promise<DocumentData | null> {
+  // Debug logging
+  console.log('🔍 Looking for slug:', slug);
+  console.log('📋 Available slugs:', Object.keys(sampleDocuments));
+  const sampleDoc = sampleDocuments[slug];
+  console.log('📄 Sample doc found:', sampleDoc ? 'YES' : 'NO');
+
+  // First check if slug exists in sample data keys (bypass Prisma for testing)
+  if (sampleDoc) {
+    console.log('✅ Returning sample data directly for slug:', slug);
+    return sampleDoc;
+  }
+
+  // Also try finding by slug value in the sample data array
+  const sampleBySlug = Object.values(sampleDocuments).find(d => d.slug === slug);
+  if (sampleBySlug) {
+    console.log('✅ Found sample by slug value for:', slug);
+    return sampleBySlug;
+  }
+
   const dbUrl = process.env.DATABASE_URL || 'file:./prisma/dev.db';
   const dbPath = dbUrl.replace(/^file:/, '');
   const resolvedPath = path.resolve(process.cwd(), dbPath);
 
-  const connection = new Database(resolvedPath);
-  const adapter = new PrismaBetterSqlite3({ url: resolvedPath });
-  const prisma = new PrismaClient({ adapter });
+  let connection;
+  let adapter;
+  let prisma;
 
   try {
+    connection = new Database(resolvedPath);
+    adapter = new PrismaBetterSqlite3({ url: resolvedPath });
+    prisma = new PrismaClient({ adapter });
+
     const document = await prisma.document.findUnique({
       where: { slug },
     });
 
+    console.log('📦 Prisma result:', document ? 'Found' : 'Not found');
+
     await prisma.$disconnect();
 
-    if (!document) {
-      return null;
+    if (document) {
+      return {
+        title: document.title,
+        slug: document.slug,
+        category: document.category,
+        previewText: document.previewText,
+        price: document.price,
+        filePath: document.filePath,
+      };
     }
 
-    return {
-      title: document.title,
-      slug: document.slug,
-      category: document.category,
-      previewText: document.previewText,
-      price: document.price,
-      filePath: document.filePath,
-    };
+    return null;
   } catch (error) {
     console.error('Failed to fetch document:', error);
-    await prisma.$disconnect();
+    if (prisma) {
+      await prisma.$disconnect();
+    }
 
     // Fall back to sample data
     return sampleDocuments[slug] || null;
@@ -169,7 +196,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const doc = await getDocument(slug);
+  const decodedSlug = decodeURIComponent(slug);
+  const doc = await getDocument(decodedSlug);
 
   if (!doc) {
     return {
@@ -181,11 +209,11 @@ export async function generateMetadata({
   return {
     title: `${doc.title} | Legal Document Marketplace`,
     description: doc.previewText.slice(0, 160),
-    alternates: { canonical: `${siteUrl}/documents/${slug}` },
+    alternates: { canonical: `${siteUrl}/documents/${decodedSlug}` },
     openGraph: {
       title: `${doc.title} | Nyaera Ogega & Co. Advocates`,
       description: doc.previewText.slice(0, 160),
-      url: `${siteUrl}/documents/${slug}`,
+      url: `${siteUrl}/documents/${decodedSlug}`,
       images: [{ url: '/images/Main-HomeBanner-Herrolegal_office.jpeg', width: 1200, height: 630, alt: doc.title }],
     },
   };
@@ -197,7 +225,8 @@ export default async function DocumentPreviewPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const doc = await getDocument(slug);
+  const decodedSlug = decodeURIComponent(slug);
+  const doc = await getDocument(decodedSlug);
 
   if (!doc) {
     notFound();
@@ -293,14 +322,19 @@ export default async function DocumentPreviewPage({
 
             {/* Action buttons */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Button
-                size="lg"
-                className="bg-[#2e3192] text-white hover:bg-[#ab812b] cursor-pointer"
-                onClick={() => console.log('Checkout flow coming soon')}
-              >
-                <Download size={16} />
-                Download Full Document
-              </Button>
+              <form action={async () => {
+                'use server';
+                console.log('Checkout flow coming soon');
+              }}>
+                <Button
+                  size="lg"
+                  type="submit"
+                  className="bg-[#2e3192] text-white hover:bg-[#ab812b] cursor-pointer"
+                >
+                  <Download size={16} />
+                  Download Full Document
+                </Button>
+              </form>
 
               <Button
                 variant="outline"
