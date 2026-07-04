@@ -153,12 +153,15 @@ export default function MyPurchasesPage() {
     setShowLocalFallback(false);
   };
 
-  const handleDownload = (slug: string, id: string) => {
+  const handleDownload = (downloadToken: string | null, id: string) => {
+    if (!downloadToken) {
+      console.error('No download token available for purchase:', id);
+      return;
+    }
     setDownloading((prev) => ({ ...prev, [id]: true }));
-    setTimeout(() => {
-      window.open(`/documents/${slug}`, '_blank');
-      setDownloading((prev) => ({ ...prev, [id]: false }));
-    }, 500);
+    // Use the download API endpoint which validates token, watermarks, and returns the PDF
+    window.open(`/api/download/${downloadToken}`, '_blank');
+    setDownloading((prev) => ({ ...prev, [id]: false }));
   };
 
   // Determine which purchases to show
@@ -459,6 +462,7 @@ export default function MyPurchasesPage() {
                 const phone = 'phone' in purchase ? purchase.phone : '';
                 const transactionId = 'transactionId' in purchase ? purchase.transactionId : '';
                 const date = 'date' in purchase ? purchase.date : '';
+                const downloadToken = 'downloadToken' in purchase ? purchase.downloadToken : null;
 
                 return (
                   <motion.div
@@ -504,7 +508,7 @@ export default function MyPurchasesPage() {
 
                         {purchase.status === 'Completed' && (
                           <Button
-                            onClick={() => handleDownload(slug, purchase.id)}
+                            onClick={() => handleDownload(downloadToken, purchase.id)}
                             disabled={downloading[purchase.id]}
                             variant="outline"
                             size="sm"

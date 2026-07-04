@@ -333,7 +333,7 @@ export default async function DocumentPreviewPage({
               </div>
             </div>
 
-            {/* Preview text */}
+            {/* PDF Preview - First 2 pages with SAMPLE watermark */}
             <Card className="mb-8 border border-slate-200 bg-white shadow-sm overflow-hidden">
               <div className="h-1.5 bg-gradient-to-r from-[#ab812b] via-[#f0c675] to-[#ab812b]" />
               <CardContent className="p-6 md:p-8">
@@ -341,9 +341,33 @@ export default async function DocumentPreviewPage({
                   <FileText size={20} className="text-[#ab812b]" />
                   Document Preview
                 </h2>
-                <p className="leading-relaxed text-slate-700 whitespace-pre-line">
+                <p className="leading-relaxed text-slate-700 whitespace-pre-line mb-6">
                   {doc.previewText}
                 </p>
+
+                {/* PDF Viewer */}
+                <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+                  <div className="flex items-center justify-between bg-slate-100 px-4 py-2.5 border-b border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <FileText size={14} className="text-slate-500" />
+                      <span className="text-xs font-semibold text-slate-600">Sample Preview (First 2 Pages)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-full bg-red-500" />
+                      <span className="size-2.5 rounded-full bg-amber-400" />
+                      <span className="size-2.5 rounded-full bg-emerald-500" />
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <iframe
+                      src={`/api/preview/${doc.slug}`}
+                      className="w-full h-[500px] md:h-[600px]"
+                      title={`Preview of ${doc.title}`}
+                    />
+                    {/* Overlay gradient to indicate sample */}
+                    <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white/80 to-transparent pointer-events-none" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -356,12 +380,12 @@ export default async function DocumentPreviewPage({
                 </div>
                 <div>
                   <h3 className="font-display text-base font-bold text-amber-800">
-                    This is a preview
+                    This is a sample preview
                   </h3>
                   <p className="mt-1 text-sm leading-relaxed text-amber-700">
-                    You are viewing a preview of this document. The full document contains detailed clauses,
-                    legal provisions, and execution pages. Pay to download the complete, ready-to-use legal
-                    document template.
+                    You are viewing the first 2 pages with a "SAMPLE — NOT FOR USE" watermark.
+                    The full document contains detailed clauses, legal provisions, and execution pages.
+                    Purchase to download the complete, ready-to-use legal document template.
                   </p>
                 </div>
               </CardContent>

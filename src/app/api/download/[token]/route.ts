@@ -15,7 +15,10 @@ export async function GET(
   try {
     const { token } = await params;
 
+    console.log('🔍 [DOWNLOAD] Token received:', token);
+
     if (!token) {
+      console.log('❌ [DOWNLOAD] No token provided');
       return NextResponse.json(
         { error: 'Download token is required' },
         { status: 400 }
@@ -25,17 +28,36 @@ export async function GET(
     const db = getDb();
 
     // ── Find purchase by token ──────────────────────────────────────
+    console.log('🔍 [DOWNLOAD] Looking up purchase for token:', token);
     const purchase = await db.purchase.findUnique({
       where: { downloadToken: token },
       include: { document: true },
     });
 
     if (!purchase) {
+      console.log('❌ [DOWNLOAD] No purchase found for token:', token);
+      // Try to list all tokens to debug
+      const allTokens = await db.purchase.findMany({
+        where: { downloadToken: { not: null } },
+        select: { id: true, downloadToken: true, status: true },
+        take: 10,
+      });
+      console.log('🔍 [DOWNLOAD] Available tokens in DB:', JSON.stringify(allTokens));
       return NextResponse.json(
         { error: 'Invalid download token' },
         { status: 404 }
       );
     }
+
+    console.log('✅ [DOWNLOAD] Purchase found:', {
+      id: purchase.id,
+      documentTitle: purchase.document.title,
+      filePath: purchase.document.filePath,
+      status: purchase.status,
+      tokenUsed: purchase.tokenUsed,
+      tokenExpiry: purchase.tokenExpiry?.toISOString(),
+      licenseAccepted: purchase.licenseAccepted,
+    });
 
     // ── Check if token has been used (one-time use) ─────────────────
     if (purchase.tokenUsed) {

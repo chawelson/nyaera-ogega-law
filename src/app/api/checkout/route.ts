@@ -8,11 +8,24 @@ import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
  * POST /api/checkout
  * Processes a checkout with guest info (email + phone), creates purchase record,
  * initiates M-Pesa STK Push, and returns the checkout request ID for polling.
+ *
+ * Test mode (uses KES 1 instead of actual price):
+ *   - Auto-enabled when NODE_ENV === 'development'
+ *   - Can be forced with ?test=true query parameter
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { items, email, phone, name } = body;
+
+    // ── Test mode detection ──────────────────────────────────────────
+    const { searchParams } = new URL(request.url);
+    const isTestMode =
+      process.env.NODE_ENV === 'development' || searchParams.get('test') === 'true';
+
+    if (isTestMode) {
+      console.log('🧪 TEST MODE: Using KES 1 for all items');
+    }
 
     // ── Validation ──────────────────────────────────────────────────
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -62,13 +75,16 @@ export async function POST(request: NextRequest) {
       const downloadToken = generateDownloadToken();
       const tokenExpiry = getTokenExpiry();
 
+      // Determine the amount to charge (KES 1 in test mode)
+      const chargeAmount = isTestMode ? 1 : document.price;
+
       // Create purchase record (pending until M-Pesa confirms)
       const purchase = await db.purchase.create({
         data: {
           documentId: document.id,
           userEmail: email,
           userPhone: phone,
-          amount: document.price,
+          amount: chargeAmount,
           checkoutId,
           status: 'pending',
           downloadToken,
@@ -87,9 +103,9 @@ export async function POST(request: NextRequest) {
       try {
         const stkResult = await initiateStkPush({
           phoneNumber: phone,
-          amount: document.price,
+          amount: chargeAmount,
           accountReference: checkoutId,
-          transactionDesc: document.title,
+          transactionDesc: isTestMode ? 'TEST PURCHASE' : document.title,
           callbackUrl,
         });
 
@@ -113,9 +129,10 @@ export async function POST(request: NextRequest) {
           checkoutId: stkResult.CheckoutRequestID,
           merchantRequestId: stkResult.MerchantRequestID,
           documentTitle: document.title,
-          amount: document.price,
+          amount: chargeAmount,
           status: 'pending',
           message: 'M-Pesa STK Push sent. Check your phone to complete payment.',
+          isTestMode,
         });
       } catch (stkError) {
         console.error(`❌ STK Push failed for ${checkoutId}:`, stkError);
@@ -130,9 +147,10 @@ export async function POST(request: NextRequest) {
           purchaseId: purchase.id,
           checkoutId,
           documentTitle: document.title,
-          amount: document.price,
+          amount: chargeAmount,
           status: 'failed',
           error: stkError instanceof Error ? stkError.message : 'M-Pesa payment initiation failed',
+          isTestMode,
         });
       }
     }

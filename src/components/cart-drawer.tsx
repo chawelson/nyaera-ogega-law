@@ -66,6 +66,17 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
   const [stkError, setStkError] = useState('');
   const [stkRetryCount, setStkRetryCount] = useState(0);
+  const [isTestMode, setIsTestMode] = useState(false);
+
+  // Detect test mode from URL or environment
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      queueMicrotask(() => {
+        setIsTestMode(params.get('test') === 'true');
+      });
+    }
+  }, []);
 
   // Reset checkout state when drawer closes
   useEffect(() => {
