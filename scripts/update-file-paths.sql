@@ -1,0 +1,9 @@
+UPDATE documents SET file_path = '/documents/sale-agreement.pdf' WHERE slug = 'sale-agreement-land-property-transfer';
+UPDATE documents SET file_path = '/documents/employment-contract.pdf' WHERE slug = 'employment-contract-permanent-fixed-term';
+UPDATE documents SET file_path = '/documents/company-incorporation.pdf' WHERE slug = 'company-incorporation-documents-kenya';
+UPDATE documents SET file_path = '/documents/lease-agreement.pdf' WHERE slug = 'lease-agreement-commercial-residential';
+UPDATE documents SET file_path = '/documents/mou-template.pdf' WHERE slug = 'memorandum-of-understanding-mou';
+UPDATE documents SET file_path = '/documents/power-of-attorney.pdf' WHERE slug = 'power-of-attorney-general-specific';
+UPDATE documents SET file_path = '/documents/tenancy-notice.pdf' WHERE slug = 'tenancy-notice-landlord-tenant';
+UPDATE documents SET file_path = '/documents/divorce-petition.pdf' WHERE slug = 'divorce-petition-irretrievable-breakdown';
+UPDATE documents SET file_path = '/documents/civil-litigation-templates.pdf' WHERE slug = 'civil-litigation-plaintiff-defendant';

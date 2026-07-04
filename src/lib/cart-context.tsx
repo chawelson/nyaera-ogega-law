@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 
 // ── Types ───────────────────────────────────────────────────────────
 export interface CartItem {
@@ -35,6 +35,8 @@ interface CartContextType {
   purchases: PurchaseRecord[];
   addPurchase: (purchase: Omit<PurchaseRecord, 'id' | 'date' | 'transactionId'>) => PurchaseRecord;
   totalSpent: number;
+  /** True once client-side hydration is complete */
+  hydrated: boolean;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -57,20 +59,36 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => loadFromStorage<CartItem[]>(CART_KEY, []));
-  const [purchases, setPurchases] = useState<PurchaseRecord[]>(() =>
-    loadFromStorage<PurchaseRecord[]>(PURCHASES_KEY, [])
-  );
+  // Start with empty arrays to match server render
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseRecord[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const loaded = useRef(false);
 
-  // Persist cart to localStorage whenever it changes
+  // Load from localStorage only after mount (client-side only)
   useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
+
+    const savedItems = loadFromStorage<CartItem[]>(CART_KEY, []);
+    const savedPurchases = loadFromStorage<PurchaseRecord[]>(PURCHASES_KEY, []);
+
+    setItems(savedItems);
+    setPurchases(savedPurchases);
+    setHydrated(true);
+  }, []);
+
+  // Persist cart to localStorage whenever it changes (only after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem(CART_KEY, JSON.stringify(items));
-  }, [items]);
+  }, [items, hydrated]);
 
-  // Persist purchases to localStorage whenever they change
+  // Persist purchases to localStorage whenever they change (only after hydration)
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
-  }, [purchases]);
+  }, [purchases, hydrated]);
 
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => {
     setItems((prev) => {
@@ -124,6 +142,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         purchases,
         addPurchase,
         totalSpent,
+        hydrated,
       }}
     >
       {children}

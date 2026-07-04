@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { generateDownloadToken, getTokenExpiry, createDownloadUrl } from '@/lib/download-token';
 import { sendPurchaseReceipt } from '@/lib/email';
+import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
 
 /**
  * POST /api/checkout
  * Processes a checkout with guest info (email + phone), creates purchase record,
- * generates download token, and sends receipt email.
+ * initiates M-Pesa STK Push, and returns the checkout request ID for polling.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -54,14 +55,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Generate checkout ID
+      // Generate checkout ID (used as AccountReference for M-Pesa)
       const checkoutId = `CHK-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
       // Generate download token with 48hr expiry
       const downloadToken = generateDownloadToken();
       const tokenExpiry = getTokenExpiry();
 
-      // Create purchase record
+      // Create purchase record (pending until M-Pesa confirms)
       const purchase = await db.purchase.create({
         data: {
           documentId: document.id,
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
           userPhone: phone,
           amount: document.price,
           checkoutId,
-          status: 'completed',
+          status: 'pending',
           downloadToken,
           tokenExpiry,
           tokenUsed: false,
@@ -80,31 +81,77 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create download URL
-      const downloadUrl = createDownloadUrl(downloadToken);
+      // ── Initiate M-Pesa STK Push ──────────────────────────────────
+      const callbackUrl = getMpesaCallbackUrl();
 
-      // Send receipt email
-      await sendPurchaseReceipt({
-        to: email,
-        buyerName,
-        documentTitle: document.title,
-        amount: document.price,
-        downloadUrl,
-        transactionId: checkoutId,
-      });
+      try {
+        const stkResult = await initiateStkPush({
+          phoneNumber: phone,
+          amount: document.price,
+          accountReference: checkoutId,
+          transactionDesc: document.title,
+          callbackUrl,
+        });
 
-      results.push({
-        purchaseId: purchase.id,
-        checkoutId,
-        documentTitle: document.title,
-        downloadUrl,
-        tokenExpiry: tokenExpiry.toISOString(),
-      });
+        console.log(`📱 STK Push initiated:`, {
+          checkoutId,
+          CheckoutRequestID: stkResult.CheckoutRequestID,
+          MerchantRequestID: stkResult.MerchantRequestID,
+        });
+
+        // Update purchase with the M-Pesa CheckoutRequestID for webhook matching
+        await db.purchase.update({
+          where: { id: purchase.id },
+          data: {
+            // Store the CheckoutRequestID so the webhook can find this purchase
+            checkoutId: stkResult.CheckoutRequestID,
+          },
+        });
+
+        results.push({
+          purchaseId: purchase.id,
+          checkoutId: stkResult.CheckoutRequestID,
+          merchantRequestId: stkResult.MerchantRequestID,
+          documentTitle: document.title,
+          amount: document.price,
+          status: 'pending',
+          message: 'M-Pesa STK Push sent. Check your phone to complete payment.',
+        });
+      } catch (stkError) {
+        console.error(`❌ STK Push failed for ${checkoutId}:`, stkError);
+
+        // Mark purchase as failed
+        await db.purchase.update({
+          where: { id: purchase.id },
+          data: { status: 'failed' },
+        });
+
+        results.push({
+          purchaseId: purchase.id,
+          checkoutId,
+          documentTitle: document.title,
+          amount: document.price,
+          status: 'failed',
+          error: stkError instanceof Error ? stkError.message : 'M-Pesa payment initiation failed',
+        });
+      }
+    }
+
+    // Check if all items failed
+    const allFailed = results.every((r) => r.status === 'failed');
+    const anySuccess = results.some((r) => r.status === 'pending');
+
+    if (allFailed) {
+      return NextResponse.json({
+        success: false,
+        error: 'M-Pesa payment could not be initiated. Please try again.',
+        purchases: results,
+      }, { status: 502 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Purchase completed successfully',
+      message: 'M-Pesa STK Push sent. Please check your phone and enter your PIN to complete payment.',
       purchases: results,
     });
   } catch (error) {

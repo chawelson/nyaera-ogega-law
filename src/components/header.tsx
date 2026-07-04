@@ -56,7 +56,7 @@ export function Header() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const pathname = usePathname();
-  const { itemCount } = useCart();
+  const { itemCount, hydrated } = useCart();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -65,8 +65,10 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    setIsMobileOpen(false);
-    setActiveDropdown(null);
+    queueMicrotask(() => {
+      setIsMobileOpen(false);
+      setActiveDropdown(null);
+    });
   }, [pathname]);
 
   const isActive = (href: string) => {

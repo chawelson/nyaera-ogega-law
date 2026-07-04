@@ -56,6 +56,16 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [purchaseResults, setPurchaseResults] = useState<Array<{ documentTitle: string; downloadUrl: string }>>([]);
+  const [checkoutRequestIds, setCheckoutRequestIds] = useState<string[]>([]);
+  const [pollCount, setPollCount] = useState(0);
+  const [showMpesaPrompt, setShowMpesaPrompt] = useState(false);
+  const [mpesaPhone, setMpesaPhone] = useState('');
+  const [mpesaAmount, setMpesaAmount] = useState(0);
+  const [mpesaCheckoutId, setMpesaCheckoutId] = useState('');
+  const [mpesaMerchantId, setMpesaMerchantId] = useState('');
+  const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [stkError, setStkError] = useState('');
+  const [stkRetryCount, setStkRetryCount] = useState(0);
 
   // Reset checkout state when drawer closes
   useEffect(() => {
