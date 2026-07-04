@@ -8,13 +8,15 @@ import {
   Trash2,
   ArrowRight,
   CreditCard,
-  Minus,
-  Plus,
   ShoppingBag,
   Phone,
+  Mail,
+  User,
   CheckCircle,
   Loader2,
   AlertCircle,
+  Download,
+  ExternalLink,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,11 @@ function isValidKenyanPhone(phone: string): boolean {
   return /^2547\d{8}$/.test(phone);
 }
 
+// ── Validate email ──────────────────────────────────────────────────
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 // ── Cart Drawer ─────────────────────────────────────────────────────
 interface CartDrawerProps {
   open: boolean;
@@ -40,20 +47,30 @@ interface CartDrawerProps {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, removeItem, clearCart, total, itemCount, addPurchase } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [name, setName] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [purchaseResults, setPurchaseResults] = useState<Array<{ documentTitle: string; downloadUrl: string }>>([]);
 
   // Reset checkout state when drawer closes
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
         setShowCheckout(false);
+        setEmail('');
         setPhone('');
+        setName('');
+        setEmailError('');
         setPhoneError('');
         setPaymentState('idle');
         setPurchasedItems([]);
+        setErrorMessage('');
+        setPurchaseResults([]);
       }, 300);
     }
   }, [open]);
@@ -63,7 +80,18 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     setShowCheckout(true);
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    // Validate email
+    if (!email.trim()) {
+      setEmailError('Please enter your email address');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    setEmailError('');
+
     // Validate phone
     if (!phone.trim()) {
       setPhoneError('Please enter your M-Pesa phone number');
@@ -75,15 +103,38 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     }
     setPhoneError('');
 
-    // Start payment simulation
+    // Start payment
     setPaymentState('processing');
     setPurchasedItems([...items]);
+    setErrorMessage('');
 
-    // Simulate STK push delay
-    setTimeout(() => {
+    try {
+      // Call the checkout API
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+          })),
+          email: email.trim(),
+          phone: phone.trim(),
+          name: name.trim() || email.split('@')[0],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Checkout failed');
+      }
+
+      setPurchaseResults(data.purchases || []);
       setPaymentState('success');
 
-      // Record purchases
+      // Record purchases locally
       items.forEach((item) => {
         addPurchase({
           documentId: item.id,
@@ -97,20 +148,27 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       });
 
       clearCart();
-    }, 3500);
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Payment failed. Please try again.');
+      setPaymentState('error');
+    }
   };
 
   const handleBackToCart = () => {
     setShowCheckout(false);
+    setEmail('');
     setPhone('');
+    setName('');
+    setEmailError('');
     setPhoneError('');
     setPaymentState('idle');
     setPurchasedItems([]);
+    setErrorMessage('');
+    setPurchaseResults([]);
   };
 
-  const handleDownload = (slug: string) => {
-    // Mock download - open the preview page
-    window.open(`/documents/${slug}`, '_blank');
+  const handleDownload = (url: string) => {
+    window.open(url, '_blank');
   };
 
   return (
@@ -248,6 +306,20 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
                     >
+                      {/* Guest Checkout Notice */}
+                      <div className="mb-6 rounded-xl bg-blue-50 border border-blue-200 p-4">
+                        <div className="flex items-start gap-3">
+                          <User size={18} className="text-blue-600 mt-0.5 shrink-0" />
+                          <div>
+                            <h3 className="text-sm font-bold text-blue-800">Guest Checkout</h3>
+                            <p className="text-xs text-blue-600 mt-1">
+                              No account required. Enter your email and M-Pesa phone number to purchase.
+                              Your receipt and download link will be sent to your email.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Order Summary */}
                       <div className="mb-6">
                         <h3 className="font-display text-base font-bold text-[#090d3f] mb-3">
@@ -296,10 +368,66 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         </div>
                       </div>
 
+                      {/* Name (optional) */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                          Your Name <span className="text-slate-400">(optional)</span>
+                        </label>
+                        <div className="relative">
+                          <User
+                            size={16}
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                          />
+                          <Input
+                            type="text"
+                            placeholder="John Doe"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-5 text-base focus:border-[#ab812b]/60 focus:ring-[#ab812b]/30"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Email Input */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Mail
+                            size={16}
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                          />
+                          <Input
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => {
+                              setEmail(e.target.value);
+                              setEmailError('');
+                            }}
+                            className={`w-full rounded-xl border pl-10 pr-4 py-5 text-base ${
+                              emailError
+                                ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+                                : 'border-slate-200 focus:border-[#ab812b]/60 focus:ring-[#ab812b]/30'
+                            }`}
+                          />
+                        </div>
+                        {emailError && (
+                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-500">
+                            <AlertCircle size={12} />
+                            {emailError}
+                          </p>
+                        )}
+                        <p className="mt-1.5 text-xs text-slate-400">
+                          Your receipt and download link will be sent here.
+                        </p>
+                      </div>
+
                       {/* Phone Input */}
                       <div className="mb-6">
                         <label className="block text-sm font-semibold text-slate-700 mb-2">
-                          M-Pesa Phone Number
+                          M-Pesa Phone Number <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <Phone
@@ -365,7 +493,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         </div>
                       </div>
                       <h3 className="font-display text-xl font-bold text-[#090d3f]">
-                        Waiting for M-Pesa...
+                        Processing Payment...
                       </h3>
                       <p className="mt-2 text-sm text-slate-500 max-w-xs">
                         Please check your phone and enter your M-Pesa PIN to complete the payment.
@@ -401,28 +529,80 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         Payment Successful!
                       </h3>
                       <p className="mt-2 text-sm text-slate-500 max-w-xs">
-                        Your documents are ready to download. Thank you for your purchase.
+                        Your documents are ready. A receipt with download links has been sent to{' '}
+                        <strong className="text-slate-700">{email}</strong>.
                       </p>
 
                       <div className="mt-6 w-full space-y-3">
-                        {purchasedItems.map((item) => (
-                          <Button
-                            key={item.id}
-                            onClick={() => handleDownload(item.slug)}
-                            variant="outline"
-                            className="w-full justify-between border-[#ab812b]/30 text-[#2e3192] hover:bg-[#ab812b]/5 hover:border-[#ab812b] rounded-xl py-5"
-                          >
-                            <span className="truncate text-sm font-semibold">{item.title}</span>
-                            <span className="text-xs text-[#ab812b] font-bold ml-2">Download</span>
-                          </Button>
-                        ))}
+                        {purchaseResults.length > 0 ? (
+                          purchaseResults.map((result, i) => (
+                            <Button
+                              key={i}
+                              onClick={() => handleDownload(result.downloadUrl)}
+                              variant="outline"
+                              className="w-full justify-between border-[#ab812b]/30 text-[#2e3192] hover:bg-[#ab812b]/5 hover:border-[#ab812b] rounded-xl py-5"
+                            >
+                              <span className="truncate text-sm font-semibold">{result.documentTitle}</span>
+                              <span className="flex items-center gap-1 text-xs text-[#ab812b] font-bold ml-2">
+                                <Download size={14} />
+                                Download
+                              </span>
+                            </Button>
+                          ))
+                        ) : (
+                          purchasedItems.map((item) => (
+                            <Button
+                              key={item.id}
+                              onClick={() => handleDownload(`/documents/${item.slug}`)}
+                              variant="outline"
+                              className="w-full justify-between border-[#ab812b]/30 text-[#2e3192] hover:bg-[#ab812b]/5 hover:border-[#ab812b] rounded-xl py-5"
+                            >
+                              <span className="truncate text-sm font-semibold">{item.title}</span>
+                              <span className="flex items-center gap-1 text-xs text-[#ab812b] font-bold ml-2">
+                                <Download size={14} />
+                                Download
+                              </span>
+                            </Button>
+                          ))
+                        )}
                       </div>
+
+                      <p className="mt-4 text-xs text-slate-400">
+                        <ExternalLink size={12} className="inline mr-1" />
+                        Check your email for the receipt and download link.
+                      </p>
 
                       <Button
                         onClick={onClose}
-                        className="mt-6 bg-[#2e3192] text-white hover:bg-[#ab812b] rounded-xl py-5"
+                        className="mt-4 bg-[#2e3192] text-white hover:bg-[#ab812b] rounded-xl py-5"
                       >
                         Continue Shopping
+                      </Button>
+                    </motion.div>
+                  )}
+
+                  {/* ── ERROR STATE ── */}
+                  {paymentState === 'error' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col items-center justify-center h-full text-center py-12"
+                    >
+                      <div className="flex items-center justify-center size-24 rounded-full bg-red-100 mb-6">
+                        <AlertCircle size={48} className="text-red-500" />
+                      </div>
+                      <h3 className="font-display text-xl font-bold text-[#090d3f]">
+                        Payment Failed
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-500 max-w-xs">
+                        {errorMessage || 'Something went wrong. Please try again.'}
+                      </p>
+                      <Button
+                        onClick={() => setPaymentState('idle')}
+                        className="mt-6 bg-[#2e3192] text-white hover:bg-[#ab812b] rounded-xl py-5"
+                      >
+                        Try Again
                       </Button>
                     </motion.div>
                   )}

@@ -10,7 +10,7 @@ datasource db {
   provider = "postgresql"
 }
 
-// Your Document and Purchase models stay the same
+// ── Document Model ──────────────────────────────────────────────────
 model Document {
   id          Int      @id @default(autoincrement())
   title       String
@@ -26,17 +26,48 @@ model Document {
   @@map("documents")
 }
 
+// ── Purchase Model ──────────────────────────────────────────────────
 model Purchase {
-  id           Int      @id @default(autoincrement())
-  documentId   Int
-  document     Document @relation(fields: [documentId], references: [id])
-  userPhone    String   @map("user_phone")
-  amount       Float
-  checkoutId   String   @unique @map("checkout_id")
-  status       String   @default("pending")
-  downloadToken String? @unique @map("download_token")
-  tokenExpiry  DateTime? @map("token_expiry")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            Int      @id @default(autoincrement())
+  documentId    Int
+  document      Document @relation(fields: [documentId], references: [id])
+  userEmail     String?  @map("user_email")
+  userPhone     String   @map("user_phone")
+  amount        Float
+  checkoutId    String   @unique @map("checkout_id")
+  status        String   @default("pending")
+  downloadToken String?  @unique @map("download_token")
+  tokenExpiry   DateTime? @map("token_expiry")
+  tokenUsed     Boolean  @default(false) @map("token_used")
+  licenseAccepted Boolean @default(false) @map("license_accepted")
+  createdAt     DateTime @default(now()) @map("created_at")
+  downloadLogs  DownloadLog[]
 
   @@map("purchases")
+}
+
+// ── Download Log Model ──────────────────────────────────────────────
+model DownloadLog {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  ipAddress  String   @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  userEmail  String?  @map("user_email")
+  downloadedAt DateTime @default(now()) @map("downloaded_at")
+
+  @@map("download_logs")
+}
+
+// ── License Agreement Model ─────────────────────────────────────────
+model LicenseAgreement {
+  id        Int      @id @default(autoincrement())
+  version   String   @default("1.0")
+  title     String
+  content   String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("license_agreements")
 }
