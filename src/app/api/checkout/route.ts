@@ -28,10 +28,15 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_MPESA_TEST_MODE === 'true';
 
     // Determine test amount from env var, default to 1
-    const testAmount = parseInt(process.env.MPESA_TEST_AMOUNT || '1', 10);
+    const rawTestAmount = process.env.MPESA_TEST_AMOUNT;
+    const testAmount = parseInt(rawTestAmount || '1', 10);
 
     if (isTestMode) {
-      console.log(`🧪 TEST MODE: Using KES ${testAmount} for all items (from MPESA_TEST_AMOUNT env var)`);
+      console.log(`🧪 TEST MODE: Active`);
+      console.log(`🧪 TEST MODE: MPESA_TEST_AMOUNT env var = "${rawTestAmount}" (raw), parsed = ${testAmount}`);
+      console.log(`🧪 TEST MODE: NODE_ENV = "${process.env.NODE_ENV}"`);
+      console.log(`🧪 TEST MODE: NEXT_PUBLIC_MPESA_TEST_MODE = "${process.env.NEXT_PUBLIC_MPESA_TEST_MODE}"`);
+      console.log(`🧪 TEST MODE: searchParams.get('test') = "${searchParams.get('test')}"`);
     }
 
     // ── Validation ──────────────────────────────────────────────────
@@ -106,6 +111,15 @@ export async function POST(request: NextRequest) {
 
       // ── Initiate M-Pesa STK Push ──────────────────────────────────
       const callbackUrl = getMpesaCallbackUrl();
+
+      console.log(`📱 Sending STK Push:`, {
+        phone: phone.slice(0, 6) + '*****',
+        amount: chargeAmount,
+        accountRef: checkoutId,
+        isTestMode,
+        documentPrice: document.price,
+        testAmount,
+      });
 
       try {
         const stkResult = await initiateStkPush({
