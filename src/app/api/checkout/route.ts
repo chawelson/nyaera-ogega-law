@@ -9,9 +9,11 @@ import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
  * Processes a checkout with guest info (email + phone), creates purchase record,
  * initiates M-Pesa STK Push, and returns the checkout request ID for polling.
  *
- * Test mode (uses KES 1 instead of actual price):
+ * Test mode:
  *   - Auto-enabled when NODE_ENV === 'development'
  *   - Can be forced with ?test=true query parameter
+ *   - Can be forced with NEXT_PUBLIC_MPESA_TEST_MODE=true env var
+ *   - Uses MPESA_TEST_AMOUNT env var (defaults to 1) for the charge amount
  */
 export async function POST(request: NextRequest) {
   try {
@@ -21,10 +23,15 @@ export async function POST(request: NextRequest) {
     // ── Test mode detection ──────────────────────────────────────────
     const { searchParams } = new URL(request.url);
     const isTestMode =
-      process.env.NODE_ENV === 'development' || searchParams.get('test') === 'true';
+      process.env.NODE_ENV === 'development' ||
+      searchParams.get('test') === 'true' ||
+      process.env.NEXT_PUBLIC_MPESA_TEST_MODE === 'true';
+
+    // Determine test amount from env var, default to 1
+    const testAmount = parseInt(process.env.MPESA_TEST_AMOUNT || '1', 10);
 
     if (isTestMode) {
-      console.log('🧪 TEST MODE: Using KES 1 for all items');
+      console.log(`🧪 TEST MODE: Using KES ${testAmount} for all items (from MPESA_TEST_AMOUNT env var)`);
     }
 
     // ── Validation ──────────────────────────────────────────────────
@@ -75,8 +82,8 @@ export async function POST(request: NextRequest) {
       const downloadToken = generateDownloadToken();
       const tokenExpiry = getTokenExpiry();
 
-      // Determine the amount to charge (KES 1 in test mode)
-      const chargeAmount = isTestMode ? 1 : document.price;
+      // Determine the amount to charge (test amount in test mode, actual price otherwise)
+      const chargeAmount = isTestMode ? testAmount : document.price;
 
       // Create purchase record (pending until M-Pesa confirms)
       const purchase = await db.purchase.create({

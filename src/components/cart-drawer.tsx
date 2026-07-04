@@ -68,12 +68,14 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const [stkRetryCount, setStkRetryCount] = useState(0);
   const [isTestMode, setIsTestMode] = useState(false);
 
-  // Detect test mode from URL or environment
+  // Detect test mode from URL or environment variable
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      const urlTestMode = params.get('test') === 'true';
+      const envTestMode = process.env.NEXT_PUBLIC_MPESA_TEST_MODE === 'true';
       queueMicrotask(() => {
-        setIsTestMode(params.get('test') === 'true');
+        setIsTestMode(urlTestMode || envTestMode);
       });
     }
   }, []);
@@ -327,6 +329,22 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
                     >
+                      {/* Test Mode Banner */}
+                      {isTestMode && (
+                        <div className="mb-6 rounded-xl bg-amber-50 border-2 border-amber-300 p-4">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle size={18} className="text-amber-600 mt-0.5 shrink-0" />
+                            <div>
+                              <h3 className="text-sm font-bold text-amber-800">🧪 TEST MODE ACTIVE</h3>
+                              <p className="text-xs text-amber-700 mt-1">
+                                You are in test mode. Only <strong>KES 1</strong> will be charged instead of the
+                                actual document price. No real payment will be processed.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Guest Checkout Notice */}
                       <div className="mb-6 rounded-xl bg-blue-50 border border-blue-200 p-4">
                         <div className="flex items-start gap-3">
