@@ -572,38 +572,16 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         <strong className="text-slate-700">{email}</strong>.
                       </p>
 
-                      <div className="mt-6 w-full space-y-3">
-                        {purchaseResults.length > 0 ? (
-                          purchaseResults.map((result, i) => (
-                            <Button
-                              key={i}
-                              onClick={() => handleDownload(result.downloadUrl)}
-                              variant="outline"
-                              className="w-full justify-between border-[#ab812b]/30 text-[#2e3192] hover:bg-[#ab812b]/5 hover:border-[#ab812b] rounded-xl py-5"
-                            >
-                              <span className="truncate text-sm font-semibold">{result.documentTitle}</span>
-                              <span className="flex items-center gap-1 text-xs text-[#ab812b] font-bold ml-2">
-                                <Download size={14} />
-                                Download
-                              </span>
-                            </Button>
-                          ))
-                        ) : (
-                          purchasedItems.map((item) => (
-                            <Button
-                              key={item.id}
-                              onClick={() => handleDownload(`/documents/${item.slug}`)}
-                              variant="outline"
-                              className="w-full justify-between border-[#ab812b]/30 text-[#2e3192] hover:bg-[#ab812b]/5 hover:border-[#ab812b] rounded-xl py-5"
-                            >
-                              <span className="truncate text-sm font-semibold">{item.title}</span>
-                              <span className="flex items-center gap-1 text-xs text-[#ab812b] font-bold ml-2">
-                                <Download size={14} />
-                                Download
-                              </span>
-                            </Button>
-                          ))
-                        )}
+                      <div className="mt-6 w-full px-4">
+                        <Link
+                          href="/my-purchases"
+                          onClick={onClose}
+                          className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#2e3192] px-6 py-4 text-base font-bold text-white hover:bg-[#ab812b] transition-all duration-200"
+                        >
+                          <ShoppingBag size={18} />
+                          Go to My Purchases
+                          <ArrowRight size={18} />
+                        </Link>
                       </div>
 
                       <p className="mt-4 text-xs text-slate-400">
