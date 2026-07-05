@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { generateDownloadToken, getTokenExpiry, createDownloadUrl } from '@/lib/download-token';
@@ -145,6 +146,23 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        // ── Test mode: auto-complete purchase ───────────────────────────
+        // In test mode, the M-Pesa webhook may not fire (sandbox limitations).
+        // We mark the purchase as 'completed' immediately so the download
+        // link works without waiting for the webhook callback.
+        let purchaseStatus = 'pending';
+        if (isTestMode) {
+          console.log(`🧪 TEST MODE: Auto-completing purchase ${purchase.id}`);
+          await db.purchase.update({
+            where: { id: purchase.id },
+            data: {
+              status: 'completed',
+            },
+          });
+          purchaseStatus = 'completed';
+          console.log(`✅ TEST MODE: Purchase ${purchase.id} marked as completed`);
+        }
+
         // ── Send receipt email immediately ──────────────────────────────
         // This ensures the user gets their download link even if the webhook
         // doesn't fire (e.g., in test mode or network issues).
@@ -172,8 +190,10 @@ export async function POST(request: NextRequest) {
           merchantRequestId: stkResult.MerchantRequestID,
           documentTitle: document.title,
           amount: chargeAmount,
-          status: 'pending',
-          message: 'M-Pesa STK Push sent. Check your phone to complete payment.',
+          status: purchaseStatus,
+          message: isTestMode
+            ? 'Test purchase completed! Your receipt and download link have been sent.'
+            : 'M-Pesa STK Push sent. Check your phone to complete payment.',
           isTestMode,
         });
       } catch (stkError) {
@@ -199,7 +219,7 @@ export async function POST(request: NextRequest) {
 
     // Check if all items failed
     const allFailed = results.every((r) => r.status === 'failed');
-    const anySuccess = results.some((r) => r.status === 'pending');
+    const anySuccess = results.some((r) => r.status === 'pending' || r.status === 'completed');
 
     if (allFailed) {
       return NextResponse.json({
@@ -209,9 +229,13 @@ export async function POST(request: NextRequest) {
       }, { status: 502 });
     }
 
+    const successMessage = isTestMode
+      ? 'Test purchase completed! Your receipt and download link have been sent to your email.'
+      : 'M-Pesa STK Push sent. Please check your phone and enter your PIN to complete payment.';
+
     return NextResponse.json({
       success: true,
-      message: 'M-Pesa STK Push sent. Please check your phone and enter your PIN to complete payment.',
+      message: successMessage,
       purchases: results,
     });
   } catch (error) {
