@@ -89,6 +89,58 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===================== DOCUMENT MARKETPLACE CTA ===================== */}
+      <section className="relative isolate overflow-hidden bg-gradient-to-br from-[#090d3f] via-[#1a1d6e] to-[#2e3192] py-16 md:py-20">
+        <div className="absolute inset-0 -z-10 bg-grid opacity-10" />
+        <div className="site-container text-center">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-6 inline-flex rounded border border-[#ab812b]/40 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-[#f0c675] backdrop-blur">
+              Document Marketplace
+            </div>
+            <h2 className="text-balance text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl">
+              Access Premium Legal Documents Instantly
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
+              Download professionally drafted legal documents prepared by Nyaera Ogega & Co. Advocates. 
+              Ready-to-use templates for property, business, employment, and personal legal matters.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <Link
+                href="/documents"
+                className="inline-flex items-center gap-2 rounded bg-[#ab812b] px-8 py-4 text-base font-bold text-white shadow-xl shadow-black/20 transition-all hover:-translate-y-0.5 hover:bg-white hover:text-[#2e3192]"
+              >
+                Browse Documents <ArrowRight size={18} />
+              </Link>
+              <Link
+                href="/practice-areas"
+                className="inline-flex items-center gap-2 rounded border border-white/30 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur transition-all hover:border-[#ab812b] hover:text-[#f0c675]"
+              >
+                View Practice Areas
+              </Link>
+            </div>
+            {/* Trust Badges */}
+            <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3">
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <CheckCircle2 size={16} className="text-[#f0c675]" />
+                <span>9+ Documents</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <CheckCircle2 size={16} className="text-[#f0c675]" />
+                <span>Instant Download</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <CheckCircle2 size={16} className="text-[#f0c675]" />
+                <span>Secure Payment</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <CheckCircle2 size={16} className="text-[#f0c675]" />
+                <span>Drafted by Advocates</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===================== ABOUT ===================== */}
       <section className="bg-white py-16 md:py-24">
         <div className="site-container grid gap-12 lg:grid-cols-[.9fr_1.1fr] lg:items-center">

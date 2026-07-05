@@ -19,6 +19,7 @@ import {
   Scale,
   ShoppingCart,
   ShoppingBag,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -45,8 +46,16 @@ const navLinks = [
   },
   { href: '/case-results', label: 'Case Results', icon: BookOpen },
   { href: '/team', label: 'Our Team', icon: Users },
-  { href: '/insights', label: 'Insights', icon: Newspaper },
-  { href: '/careers', label: 'Careers', icon: Briefcase },
+  {
+    href: '#',
+    label: 'Resources',
+    icon: FileText,
+    children: [
+      { href: '/documents', label: 'Documents', icon: FileText },
+      { href: '/insights', label: 'Insights', icon: Newspaper },
+      { href: '/careers', label: 'Careers', icon: Briefcase },
+    ],
+  },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
 ];
 

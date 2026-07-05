@@ -145,6 +145,27 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        // ── Send receipt email immediately ──────────────────────────────
+        // This ensures the user gets their download link even if the webhook
+        // doesn't fire (e.g., in test mode or network issues).
+        const downloadUrl = createDownloadUrl(downloadToken);
+        const buyerName = email.split('@')[0];
+
+        try {
+          const emailSent = await sendPurchaseReceipt({
+            to: email,
+            buyerName,
+            documentTitle: document.title,
+            amount: chargeAmount,
+            downloadUrl,
+            transactionId: stkResult.CheckoutRequestID,
+          });
+          console.log(`📧 Receipt email ${emailSent ? 'sent' : 'FAILED'} to ${email} for ${document.title}`);
+        } catch (emailErr) {
+          console.error(`❌ Failed to send receipt email for ${document.title}:`, emailErr);
+          // Don't fail the checkout for email failure
+        }
+
         results.push({
           purchaseId: purchase.id,
           checkoutId: stkResult.CheckoutRequestID,
