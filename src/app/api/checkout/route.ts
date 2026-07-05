@@ -10,11 +10,11 @@ import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
  * Processes a checkout with guest info (email + phone), creates purchase record,
  * initiates M-Pesa STK Push, and returns the checkout request ID for polling.
  *
- * Test mode:
- *   - Auto-enabled when NODE_ENV === 'development'
- *   - Can be forced with ?test=true query parameter
- *   - Can be forced with NEXT_PUBLIC_MPESA_TEST_MODE=true env var
- *   - Uses MPESA_TEST_AMOUNT env var (defaults to 1) for the charge amount
+ * Test mode (?test=true):
+ *   - Completely bypasses M-Pesa — no STK Push, no webhook
+ *   - Creates purchase records directly as 'completed'
+ *   - Sends receipt email immediately with download link
+ *   - Uses MPESA_TEST_AMOUNT env var (defaults to 1) for the amount
  */
 export async function POST(request: NextRequest) {
   try {
@@ -28,16 +28,12 @@ export async function POST(request: NextRequest) {
       searchParams.get('test') === 'true' ||
       process.env.NEXT_PUBLIC_MPESA_TEST_MODE === 'true';
 
-    // Determine test amount from env var, default to 1
     const rawTestAmount = process.env.MPESA_TEST_AMOUNT;
     const testAmount = parseInt(rawTestAmount || '1', 10);
 
     if (isTestMode) {
-      console.log(`🧪 TEST MODE: Active`);
+      console.log(`🧪 TEST MODE: Bypassing M-Pesa entirely`);
       console.log(`🧪 TEST MODE: MPESA_TEST_AMOUNT env var = "${rawTestAmount}" (raw), parsed = ${testAmount}`);
-      console.log(`🧪 TEST MODE: NODE_ENV = "${process.env.NODE_ENV}"`);
-      console.log(`🧪 TEST MODE: NEXT_PUBLIC_MPESA_TEST_MODE = "${process.env.NEXT_PUBLIC_MPESA_TEST_MODE}"`);
-      console.log(`🧪 TEST MODE: searchParams.get('test') = "${searchParams.get('test')}"`);
     }
 
     // ── Validation ──────────────────────────────────────────────────
@@ -81,15 +77,67 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Generate checkout ID (used as AccountReference for M-Pesa)
-      const checkoutId = `CHK-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      // ── TEST MODE: Bypass M-Pesa entirely ────────────────────────────
+      if (isTestMode) {
+        const testCheckoutId = `TEST-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+        const testDownloadToken = crypto.randomBytes(32).toString('hex');
+        const testTokenExpiry = new Date(Date.now() + 48 * 60 * 60 * 1000);
 
-      // Generate download token with 48hr expiry
+        // Create purchase directly as 'completed'
+        const purchase = await db.purchase.create({
+          data: {
+            documentId: document.id,
+            userEmail: email,
+            userPhone: phone,
+            amount: testAmount,
+            checkoutId: testCheckoutId,
+            status: 'completed',
+            downloadToken: testDownloadToken,
+            tokenExpiry: testTokenExpiry,
+            tokenUsed: false,
+            licenseAccepted: false,
+          },
+          include: {
+            document: true,
+          },
+        });
+
+        console.log(`🧪 TEST MODE: Purchase ${purchase.id} created as 'completed'`);
+
+        // Send receipt email immediately
+        const downloadUrl = createDownloadUrl(testDownloadToken);
+        try {
+          const emailSent = await sendPurchaseReceipt({
+            to: email,
+            buyerName,
+            documentTitle: document.title,
+            amount: testAmount,
+            downloadUrl,
+            transactionId: testCheckoutId,
+          });
+          console.log(`📧 Test receipt email ${emailSent ? 'sent' : 'FAILED'} to ${email} for ${document.title}`);
+        } catch (emailErr) {
+          console.error(`❌ Failed to send test receipt email for ${document.title}:`, emailErr);
+        }
+
+        results.push({
+          purchaseId: purchase.id,
+          checkoutId: testCheckoutId,
+          documentTitle: document.title,
+          amount: testAmount,
+          status: 'completed',
+          message: 'Test purchase completed! Your receipt and download link have been sent.',
+          isTestMode: true,
+        });
+
+        continue; // Skip M-Pesa flow for this item
+      }
+
+      // ── NORMAL MODE: M-Pesa flow ────────────────────────────────────
+      const checkoutId = `CHK-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const downloadToken = generateDownloadToken();
       const tokenExpiry = getTokenExpiry();
-
-      // Determine the amount to charge (test amount in test mode, actual price otherwise)
-      const chargeAmount = isTestMode ? testAmount : document.price;
+      const chargeAmount = document.price;
 
       // Create purchase record (pending until M-Pesa confirms)
       const purchase = await db.purchase.create({
@@ -117,9 +165,7 @@ export async function POST(request: NextRequest) {
         phone: phone.slice(0, 6) + '*****',
         amount: chargeAmount,
         accountRef: checkoutId,
-        isTestMode,
-        documentPrice: document.price,
-        testAmount,
+        documentTitle: document.title,
       });
 
       try {
@@ -127,7 +173,7 @@ export async function POST(request: NextRequest) {
           phoneNumber: phone,
           amount: chargeAmount,
           accountReference: checkoutId,
-          transactionDesc: isTestMode ? 'TEST PURCHASE' : document.title,
+          transactionDesc: document.title,
           callbackUrl,
         });
 
@@ -141,48 +187,9 @@ export async function POST(request: NextRequest) {
         await db.purchase.update({
           where: { id: purchase.id },
           data: {
-            // Store the CheckoutRequestID so the webhook can find this purchase
             checkoutId: stkResult.CheckoutRequestID,
           },
         });
-
-        // ── Test mode: auto-complete purchase ───────────────────────────
-        // In test mode, the M-Pesa webhook may not fire (sandbox limitations).
-        // We mark the purchase as 'completed' immediately so the download
-        // link works without waiting for the webhook callback.
-        let purchaseStatus = 'pending';
-        if (isTestMode) {
-          console.log(`🧪 TEST MODE: Auto-completing purchase ${purchase.id}`);
-          await db.purchase.update({
-            where: { id: purchase.id },
-            data: {
-              status: 'completed',
-            },
-          });
-          purchaseStatus = 'completed';
-          console.log(`✅ TEST MODE: Purchase ${purchase.id} marked as completed`);
-        }
-
-        // ── Send receipt email immediately ──────────────────────────────
-        // This ensures the user gets their download link even if the webhook
-        // doesn't fire (e.g., in test mode or network issues).
-        const downloadUrl = createDownloadUrl(downloadToken);
-        const buyerName = email.split('@')[0];
-
-        try {
-          const emailSent = await sendPurchaseReceipt({
-            to: email,
-            buyerName,
-            documentTitle: document.title,
-            amount: chargeAmount,
-            downloadUrl,
-            transactionId: stkResult.CheckoutRequestID,
-          });
-          console.log(`📧 Receipt email ${emailSent ? 'sent' : 'FAILED'} to ${email} for ${document.title}`);
-        } catch (emailErr) {
-          console.error(`❌ Failed to send receipt email for ${document.title}:`, emailErr);
-          // Don't fail the checkout for email failure
-        }
 
         results.push({
           purchaseId: purchase.id,
@@ -190,11 +197,9 @@ export async function POST(request: NextRequest) {
           merchantRequestId: stkResult.MerchantRequestID,
           documentTitle: document.title,
           amount: chargeAmount,
-          status: purchaseStatus,
-          message: isTestMode
-            ? 'Test purchase completed! Your receipt and download link have been sent.'
-            : 'M-Pesa STK Push sent. Check your phone to complete payment.',
-          isTestMode,
+          status: 'pending',
+          message: 'M-Pesa STK Push sent. Check your phone to complete payment.',
+          isTestMode: false,
         });
       } catch (stkError) {
         console.error(`❌ STK Push failed for ${checkoutId}:`, stkError);
@@ -212,7 +217,7 @@ export async function POST(request: NextRequest) {
           amount: chargeAmount,
           status: 'failed',
           error: stkError instanceof Error ? stkError.message : 'M-Pesa payment initiation failed',
-          isTestMode,
+          isTestMode: false,
         });
       }
     }
@@ -224,7 +229,7 @@ export async function POST(request: NextRequest) {
     if (allFailed) {
       return NextResponse.json({
         success: false,
-        error: 'M-Pesa payment could not be initiated. Please try again.',
+        error: 'Payment could not be processed. Please try again.',
         purchases: results,
       }, { status: 502 });
     }
