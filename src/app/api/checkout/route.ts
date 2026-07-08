@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { generateDownloadToken, getTokenExpiry, createDownloadUrl } from '@/lib/download-token';
-import { sendPurchaseReceipt } from '@/lib/email';
+import { sendPurchaseReceipt, sendAdminOrderNotification } from '@/lib/email';
 import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
 
 /**
@@ -10,31 +10,14 @@ import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
  * Processes a checkout with guest info (email + phone), creates purchase record,
  * initiates M-Pesa STK Push, and returns the checkout request ID for polling.
  *
- * Test mode (?test=true):
- *   - Completely bypasses M-Pesa — no STK Push, no webhook
- *   - Creates purchase records directly as 'completed'
- *   - Sends receipt email immediately with download link
- *   - Uses MPESA_TEST_AMOUNT env var (defaults to 1) for the amount
+ * After successful payment, sends:
+ *   1. Receipt email to the buyer with download link
+ *   2. Order notification email to the firm's admin
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { items, email, phone, name } = body;
-
-    // ── Test mode detection ──────────────────────────────────────────
-    const { searchParams } = new URL(request.url);
-    const isTestMode =
-      process.env.NODE_ENV === 'development' ||
-      searchParams.get('test') === 'true' ||
-      process.env.NEXT_PUBLIC_MPESA_TEST_MODE === 'true';
-
-    const rawTestAmount = process.env.MPESA_TEST_AMOUNT;
-    const testAmount = parseInt(rawTestAmount || '1', 10);
-
-    if (isTestMode) {
-      console.log(`🧪 TEST MODE: Bypassing M-Pesa entirely`);
-      console.log(`🧪 TEST MODE: MPESA_TEST_AMOUNT env var = "${rawTestAmount}" (raw), parsed = ${testAmount}`);
-    }
+    const { items, email, phone, name, instructions } = body;
 
     // ── Validation ──────────────────────────────────────────────────
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -77,63 +60,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // ── TEST MODE: Bypass M-Pesa entirely ────────────────────────────
-      if (isTestMode) {
-        const testCheckoutId = `TEST-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-        const testDownloadToken = crypto.randomBytes(32).toString('hex');
-        const testTokenExpiry = new Date(Date.now() + 48 * 60 * 60 * 1000);
-
-        // Create purchase directly as 'completed'
-        const purchase = await db.purchase.create({
-          data: {
-            documentId: document.id,
-            userEmail: email,
-            userPhone: phone,
-            amount: testAmount,
-            checkoutId: testCheckoutId,
-            status: 'completed',
-            downloadToken: testDownloadToken,
-            tokenExpiry: testTokenExpiry,
-            tokenUsed: false,
-            licenseAccepted: false,
-          },
-          include: {
-            document: true,
-          },
-        });
-
-        console.log(`🧪 TEST MODE: Purchase ${purchase.id} created as 'completed'`);
-
-        // Send receipt email immediately
-        const downloadUrl = createDownloadUrl(testDownloadToken);
-        try {
-          const emailSent = await sendPurchaseReceipt({
-            to: email,
-            buyerName,
-            documentTitle: document.title,
-            amount: testAmount,
-            downloadUrl,
-            transactionId: testCheckoutId,
-          });
-          console.log(`📧 Test receipt email ${emailSent ? 'sent' : 'FAILED'} to ${email} for ${document.title}`);
-        } catch (emailErr) {
-          console.error(`❌ Failed to send test receipt email for ${document.title}:`, emailErr);
-        }
-
-        results.push({
-          purchaseId: purchase.id,
-          checkoutId: testCheckoutId,
-          documentTitle: document.title,
-          amount: testAmount,
-          status: 'completed',
-          message: 'Test purchase completed! Your receipt and download link have been sent.',
-          isTestMode: true,
-        });
-
-        continue; // Skip M-Pesa flow for this item
-      }
-
-      // ── NORMAL MODE: M-Pesa flow ────────────────────────────────────
+      // ── M-Pesa flow ───────────────────────────────────────────────
       const checkoutId = `CHK-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const downloadToken = generateDownloadToken();
       const tokenExpiry = getTokenExpiry();
@@ -152,6 +79,7 @@ export async function POST(request: NextRequest) {
           tokenExpiry,
           tokenUsed: false,
           licenseAccepted: false,
+          clientInstructions: instructions || null,
         },
         include: {
           document: true,
@@ -199,7 +127,6 @@ export async function POST(request: NextRequest) {
           amount: chargeAmount,
           status: 'pending',
           message: 'M-Pesa STK Push sent. Check your phone to complete payment.',
-          isTestMode: false,
         });
       } catch (stkError) {
         console.error(`❌ STK Push failed for ${checkoutId}:`, stkError);
@@ -217,7 +144,6 @@ export async function POST(request: NextRequest) {
           amount: chargeAmount,
           status: 'failed',
           error: stkError instanceof Error ? stkError.message : 'M-Pesa payment initiation failed',
-          isTestMode: false,
         });
       }
     }
@@ -234,13 +160,9 @@ export async function POST(request: NextRequest) {
       }, { status: 502 });
     }
 
-    const successMessage = isTestMode
-      ? 'Test purchase completed! Your receipt and download link have been sent to your email.'
-      : 'M-Pesa STK Push sent. Please check your phone and enter your PIN to complete payment.';
-
     return NextResponse.json({
       success: true,
-      message: successMessage,
+      message: 'M-Pesa STK Push sent. Please check your phone and enter your PIN to complete payment.',
       purchases: results,
     });
   } catch (error) {

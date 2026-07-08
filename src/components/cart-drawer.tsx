@@ -15,12 +15,14 @@ import {
   CheckCircle,
   Loader2,
   AlertCircle,
-  Download,
   ExternalLink,
+  FileText,
+  Clock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useCart, type CartItem } from '@/lib/cart-context';
 
 // ── Format price ────────────────────────────────────────────────────
@@ -50,35 +52,14 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
+  const [instructions, setInstructions] = useState('');
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [instructionsError, setInstructionsError] = useState('');
   const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [purchaseResults, setPurchaseResults] = useState<Array<{ documentTitle: string; downloadUrl: string }>>([]);
-  const [checkoutRequestIds, setCheckoutRequestIds] = useState<string[]>([]);
-  const [pollCount, setPollCount] = useState(0);
-  const [showMpesaPrompt, setShowMpesaPrompt] = useState(false);
-  const [mpesaPhone, setMpesaPhone] = useState('');
-  const [mpesaAmount, setMpesaAmount] = useState(0);
-  const [mpesaCheckoutId, setMpesaCheckoutId] = useState('');
-  const [mpesaMerchantId, setMpesaMerchantId] = useState('');
-  const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [stkError, setStkError] = useState('');
-  const [stkRetryCount, setStkRetryCount] = useState(0);
-  const [isTestMode, setIsTestMode] = useState(false);
-
-  // Detect test mode from URL or environment variable
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const urlTestMode = params.get('test') === 'true';
-      const envTestMode = process.env.NEXT_PUBLIC_MPESA_TEST_MODE === 'true';
-      queueMicrotask(() => {
-        setIsTestMode(urlTestMode || envTestMode);
-      });
-    }
-  }, []);
 
   // Reset checkout state when drawer closes
   useEffect(() => {
@@ -88,8 +69,10 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         setEmail('');
         setPhone('');
         setName('');
+        setInstructions('');
         setEmailError('');
         setPhoneError('');
+        setInstructionsError('');
         setPaymentState('idle');
         setPurchasedItems([]);
         setErrorMessage('');
@@ -126,6 +109,13 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     }
     setPhoneError('');
 
+    // Validate instructions
+    if (!instructions.trim()) {
+      setInstructionsError('Please provide details or requirements for your document');
+      return;
+    }
+    setInstructionsError('');
+
     // Start payment
     setPaymentState('processing');
     setPurchasedItems([...items]);
@@ -145,6 +135,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           email: email.trim(),
           phone: phone.trim(),
           name: name.trim() || email.split('@')[0],
+          instructions: instructions.trim(),
         }),
       });
 
@@ -165,7 +156,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           slug: item.slug,
           category: item.category,
           price: item.price,
-          status: 'Completed',
+          status: 'Pending Drafting',
           phone: phone,
         });
       });
@@ -182,16 +173,14 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     setEmail('');
     setPhone('');
     setName('');
+    setInstructions('');
     setEmailError('');
     setPhoneError('');
+    setInstructionsError('');
     setPaymentState('idle');
     setPurchasedItems([]);
     setErrorMessage('');
     setPurchaseResults([]);
-  };
-
-  const handleDownload = (url: string) => {
-    window.open(url, '_blank');
   };
 
   return (
@@ -329,31 +318,15 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      {/* Test Mode Banner */}
-                      {isTestMode && (
-                        <div className="mb-6 rounded-xl bg-amber-50 border-2 border-amber-300 p-4">
-                          <div className="flex items-start gap-3">
-                            <AlertCircle size={18} className="text-amber-600 mt-0.5 shrink-0" />
-                            <div>
-                              <h3 className="text-sm font-bold text-amber-800">🧪 TEST MODE ACTIVE</h3>
-                              <p className="text-xs text-amber-700 mt-1">
-                                You are in test mode. Only <strong>KES 1</strong> will be charged instead of the
-                                actual document price. No real payment will be processed.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
                       {/* Guest Checkout Notice */}
                       <div className="mb-6 rounded-xl bg-blue-50 border border-blue-200 p-4">
                         <div className="flex items-start gap-3">
                           <User size={18} className="text-blue-600 mt-0.5 shrink-0" />
                           <div>
-                            <h3 className="text-sm font-bold text-blue-800">Guest Checkout</h3>
+                            <h3 className="text-sm font-bold text-blue-800">Document Drafting Service</h3>
                             <p className="text-xs text-blue-600 mt-1">
-                              No account required. Enter your email and M-Pesa phone number to purchase.
-                              Your receipt and download link will be sent to your email.
+                              No account required. Enter your details and we will draft your bespoke legal document.
+                              You will receive a download link via email once your document is ready.
                             </p>
                           </div>
                         </div>
@@ -464,7 +437,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       </div>
 
                       {/* Phone Input */}
-                      <div className="mb-6">
+                      <div className="mb-4">
                         <label className="block text-sm font-semibold text-slate-700 mb-2">
                           M-Pesa Phone Number <span className="text-red-500">*</span>
                         </label>
@@ -497,6 +470,57 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         <p className="mt-1.5 text-xs text-slate-400">
                           Enter your Safaricom number to receive the M-Pesa prompt.
                         </p>
+                      </div>
+
+                      {/* Special Instructions */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                          Special Instructions or Details for the Draft <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <FileText
+                            size={16}
+                            className="absolute left-3.5 top-4 text-slate-400"
+                          />
+                          <Textarea
+                            placeholder="Please provide any specific details or requirements for this document. For example: parties involved, property details, specific clauses needed, etc."
+                            value={instructions}
+                            onChange={(e) => {
+                              setInstructions(e.target.value);
+                              setInstructionsError('');
+                            }}
+                            rows={4}
+                            className={`w-full rounded-xl border pl-10 pr-4 py-3 text-base ${
+                              instructionsError
+                                ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+                                : 'border-slate-200 focus:border-[#ab812b]/60 focus:ring-[#ab812b]/30'
+                            }`}
+                          />
+                        </div>
+                        {instructionsError && (
+                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-500">
+                            <AlertCircle size={12} />
+                            {instructionsError}
+                          </p>
+                        )}
+                        <p className="mt-1.5 text-xs text-slate-400">
+                          These details help our legal team draft your document accurately.
+                        </p>
+                      </div>
+
+                      {/* Drafting Service Disclaimer */}
+                      <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 p-4">
+                        <div className="flex items-start gap-3">
+                          <AlertCircle size={18} className="text-amber-600 mt-0.5 shrink-0" />
+                          <div>
+                            <h3 className="text-sm font-bold text-amber-800">Important Notice</h3>
+                            <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                              Prices indicated are starting fees for drafting standard documents. They do not include
+                              court filing fees, process server charges, representation in court, or other disbursements.
+                              Fees for urgent, complex, or highly contested matters may vary.
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Pay Button */}
@@ -565,11 +589,12 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         <CheckCircle size={48} className="text-emerald-600" />
                       </motion.div>
                       <h3 className="font-display text-xl font-bold text-[#090d3f]">
-                        Payment Successful!
+                        Order Received!
                       </h3>
                       <p className="mt-2 text-sm text-slate-500 max-w-xs">
-                        Your documents are ready. A receipt with download links has been sent to{' '}
-                        <strong className="text-slate-700">{email}</strong>.
+                        Thank you for your order. Your document request has been received. Sharon's team will prepare
+                        your bespoke document and you will receive a download link via email within{' '}
+                        <strong className="text-slate-700">2–3 business days</strong>.
                       </p>
 
                       <div className="mt-6 w-full px-4">
@@ -586,7 +611,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
                       <p className="mt-4 text-xs text-slate-400">
                         <ExternalLink size={12} className="inline mr-1" />
-                        Check your email for the receipt and download link.
+                        Check your email for the receipt and order confirmation.
                       </p>
 
                       <Button

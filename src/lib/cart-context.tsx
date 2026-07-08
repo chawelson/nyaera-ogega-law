@@ -20,7 +20,7 @@ export interface PurchaseRecord {
   category: string;
   price: number;
   date: string;
-  status: 'Completed' | 'Pending' | 'Failed';
+  status: 'Completed' | 'Pending' | 'Failed' | 'Pending Drafting';
   phone: string;
   transactionId: string;
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowRight, FileText, Scale, Shield, Building, Gavel, Landmark, BookOpen, Briefcase, Lock, CheckCircle, Star, Download, Users, Sparkles } from 'lucide-react';
+import { ArrowRight, FileText, Scale, Shield, Building, Gavel, Landmark, BookOpen, Briefcase, Lock, CheckCircle, Star, Download, Users, Sparkles, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { siteUrl } from '@/lib/site-data';
@@ -94,23 +94,31 @@ const sampleDocuments: Record<string, {
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
-  Conveyancing: <Building size={16} />,
-  Litigation: <Gavel size={16} />,
-  'Commercial Law': <Briefcase size={16} />,
-  'Employment Law': <Scale size={16} />,
-  'Family Law': <Shield size={16} />,
-  'Corporate Law': <Landmark size={16} />,
-  'Legal Guides': <BookOpen size={16} />,
+  'Personal & Family': <Shield size={16} />,
+  'Property & Land': <Building size={16} />,
+  'Employment': <Scale size={16} />,
+  'Business': <Briefcase size={16} />,
+  'Money & Debt': <Landmark size={16} />,
+  'Court & Disputes': <Gavel size={16} />,
+  'Marriage & Succession': <Shield size={16} />,
+  'Motor Vehicles': <Building size={16} />,
+  'Digital & IP': <BookOpen size={16} />,
+  'Everyday Documents': <FileText size={16} />,
+  'Advocate Stamps': <Award size={16} />,
 };
 
 const categoryColors: Record<string, string> = {
-  Conveyancing: 'bg-blue-100 text-blue-800 border-blue-200',
-  Litigation: 'bg-red-100 text-red-800 border-red-200',
-  'Commercial Law': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  'Employment Law': 'bg-purple-100 text-purple-800 border-purple-200',
-  'Family Law': 'bg-pink-100 text-pink-800 border-pink-200',
-  'Corporate Law': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  'Legal Guides': 'bg-amber-100 text-amber-800 border-amber-200',
+  'Personal & Family': 'bg-pink-100 text-pink-800 border-pink-200',
+  'Property & Land': 'bg-blue-100 text-blue-800 border-blue-200',
+  'Employment': 'bg-purple-100 text-purple-800 border-purple-200',
+  'Business': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  'Money & Debt': 'bg-amber-100 text-amber-800 border-amber-200',
+  'Court & Disputes': 'bg-red-100 text-red-800 border-red-200',
+  'Marriage & Succession': 'bg-rose-100 text-rose-800 border-rose-200',
+  'Motor Vehicles': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+  'Digital & IP': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  'Everyday Documents': 'bg-slate-100 text-slate-800 border-slate-200',
+  'Advocate Stamps': 'bg-yellow-100 text-yellow-800 border-yellow-200',
 };
 
 function formatPrice(price: number): string {
@@ -179,8 +187,43 @@ async function getDocument(slug: string): Promise<DocumentData | null> {
   return null;
 }
 
+// ── Get related documents from DB (excluding current) ──────────────
+async function getRelatedDocumentsFromDb(currentSlug: string, count: number = 3): Promise<DocumentData[]> {
+  const connectionString = process.env.DATABASE_URL!;
+  const adapter = new PrismaPg({ connectionString });
+  const prisma = new PrismaClient({ adapter });
+
+  try {
+    const docs = await prisma.document.findMany({
+      where: {
+        status: 'active',
+        slug: { not: currentSlug },
+      },
+      take: count,
+      orderBy: { price: 'desc' },
+    });
+    return docs.map((d) => ({
+      title: d.title,
+      slug: d.slug,
+      category: d.category,
+      previewText: d.previewText,
+      price: d.price,
+      filePath: d.filePath,
+    }));
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 // ── Get related documents (excluding current) ──────────────────────
-function getRelatedDocuments(currentSlug: string, count: number = 3): DocumentData[] {
+async function getRelatedDocuments(currentSlug: string, count: number = 3): Promise<DocumentData[]> {
+  try {
+    const dbDocs = await getRelatedDocumentsFromDb(currentSlug, count);
+    if (dbDocs.length > 0) return dbDocs;
+  } catch (err) {
+    console.warn('⚠️ Database unavailable for related docs, falling back to sample data:', err);
+  }
+
   return Object.values(sampleDocuments)
     .filter(d => d.slug !== currentSlug)
     .slice(0, count);
@@ -228,7 +271,7 @@ export default async function DocumentPreviewPage({
     notFound();
   }
 
-  const relatedDocs = getRelatedDocuments(decodedSlug, 3);
+  const relatedDocs = await getRelatedDocuments(decodedSlug, 3);
 
   return (
     <>
@@ -383,7 +426,7 @@ export default async function DocumentPreviewPage({
                     This is a sample preview
                   </h3>
                   <p className="mt-1 text-sm leading-relaxed text-amber-700">
-                    You are viewing the first 2 pages with a "SAMPLE — NOT FOR USE" watermark.
+                    You are viewing the first 2 pages with a &ldquo;SAMPLE &mdash; NOT FOR USE&rdquo; watermark.
                     The full document contains detailed clauses, legal provisions, and execution pages.
                     Purchase to download the complete, ready-to-use legal document template.
                   </p>

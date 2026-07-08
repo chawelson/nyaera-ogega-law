@@ -28,32 +28,35 @@ model Document {
 
 // ── Purchase Model ──────────────────────────────────────────────────
 model Purchase {
-  id            Int      @id @default(autoincrement())
-  documentId    Int
-  document      Document @relation(fields: [documentId], references: [id])
-  userEmail     String?  @map("user_email")
-  userPhone     String   @map("user_phone")
-  amount        Float
-  checkoutId    String   @unique @map("checkout_id")
-  status        String   @default("pending")
-  downloadToken String?  @unique @map("download_token")
-  tokenExpiry   DateTime? @map("token_expiry")
-  tokenUsed     Boolean  @default(false) @map("token_used")
-  licenseAccepted Boolean @default(false) @map("license_accepted")
-  createdAt     DateTime @default(now()) @map("created_at")
-  downloadLogs  DownloadLog[]
+  id                Int      @id @default(autoincrement())
+  documentId        Int
+  document          Document @relation(fields: [documentId], references: [id])
+  userEmail         String?  @map("user_email")
+  userPhone         String   @map("user_phone")
+  amount            Float
+  checkoutId        String   @unique @map("checkout_id")
+  status            String   @default("pending")
+  downloadToken     String?  @unique @map("download_token")
+  tokenExpiry       DateTime? @map("token_expiry")
+  tokenUsed         Boolean  @default(false) @map("token_used")
+  licenseAccepted   Boolean  @default(false) @map("license_accepted")
+  clientInstructions String? @map("client_instructions")
+  documentStatus    String   @default("pending") @map("document_status")
+  adminNotes        String?  @map("admin_notes")
+  createdAt         DateTime @default(now()) @map("created_at")
+  downloadLogs      DownloadLog[]
 
   @@map("purchases")
 }
 
 // ── Download Log Model ──────────────────────────────────────────────
 model DownloadLog {
-  id         Int      @id @default(autoincrement())
-  purchaseId Int
-  purchase   Purchase @relation(fields: [purchaseId], references: [id])
-  ipAddress  String   @map("ip_address")
-  userAgent  String?  @map("user_agent")
-  userEmail  String?  @map("user_email")
+  id           Int      @id @default(autoincrement())
+  purchaseId   Int
+  purchase     Purchase @relation(fields: [purchaseId], references: [id])
+  ipAddress    String   @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  userEmail    String?  @map("user_email")
   downloadedAt DateTime @default(now()) @map("downloaded_at")
 
   @@map("download_logs")
