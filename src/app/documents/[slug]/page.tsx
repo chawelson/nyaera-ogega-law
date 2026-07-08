@@ -426,7 +426,10 @@ export default async function DocumentPreviewPage({
                     This is a sample preview
                   </h3>
                   <p className="mt-1 text-sm leading-relaxed text-amber-700">
-                    You are viewing the first 2 pages with a &ldquo;SAMPLE &mdash; NOT FOR USE&rdquo; watermark.
+                    This is a sample preview. The final document will be drafted to your specifications.
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-700">
+                    You are viewing a preview with a &ldquo;SAMPLE &mdash; PREVIEW ONLY&rdquo; watermark.
                     The full document contains detailed clauses, legal provisions, and execution pages.
                     Purchase to download the complete, ready-to-use legal document template.
                   </p>

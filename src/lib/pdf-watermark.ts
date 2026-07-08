@@ -175,3 +175,77 @@ export async function createSamplePreview(
 
   return await pdfDoc.save();
 }
+
+/**
+ * Creates a placeholder preview PDF with a large red 'SAMPLE — PREVIEW ONLY' watermark.
+ * Used when a document doesn't have a specific PDF file yet.
+ */
+export async function createPlaceholderPreview(): Promise<Uint8Array> {
+  const placeholderPath = path.join(process.cwd(), 'public', 'documents', 'placeholder.pdf');
+  const pdfBytes = await fs.readFile(placeholderPath);
+
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const pages = pdfDoc.getPages();
+
+  for (const page of pages) {
+    const { width, height } = page.getSize();
+
+    // ── Large diagonal 'SAMPLE — PREVIEW ONLY' watermark ──
+    const watermarkText = 'SAMPLE — PREVIEW ONLY';
+    const fontSize = 48;
+
+    // Draw multiple watermarks diagonally across the page for full coverage
+    for (let row = -3; row < 5; row++) {
+      for (let col = -3; col < 5; col++) {
+        page.drawText(watermarkText, {
+          x: col * 300 + row * 60,
+          y: row * 300 + col * 60,
+          size: fontSize,
+          font,
+          color: rgb(0.85, 0.1, 0.1),
+          opacity: 0.2,
+          rotate: degrees(45),
+        });
+      }
+    }
+
+    // ── Red banner at top ──
+    page.drawRectangle({
+      x: 0,
+      y: height - 70,
+      width,
+      height: 70,
+      color: rgb(0.8, 0.1, 0.1),
+      opacity: 0.75,
+    });
+    page.drawText('SAMPLE — PREVIEW ONLY', {
+      x: width / 2 - 160,
+      y: height - 48,
+      size: 24,
+      font,
+      color: rgb(1, 1, 1),
+      opacity: 0.95,
+    });
+
+    // ── Red banner at bottom ──
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width,
+      height: 70,
+      color: rgb(0.8, 0.1, 0.1),
+      opacity: 0.75,
+    });
+    page.drawText('SAMPLE — PREVIEW ONLY', {
+      x: width / 2 - 160,
+      y: 22,
+      size: 24,
+      font,
+      color: rgb(1, 1, 1),
+      opacity: 0.95,
+    });
+  }
+
+  return await pdfDoc.save();
+}
