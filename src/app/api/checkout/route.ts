@@ -5,6 +5,19 @@ import { generateDownloadToken, getTokenExpiry, createDownloadUrl } from '@/lib/
 import { sendPurchaseReceipt, sendAdminOrderNotification } from '@/lib/email';
 import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
 
+// ── Priority pricing ────────────────────────────────────────────────
+const PRIORITY_MULTIPLIERS: Record<string, number> = {
+  standard: 1.0,
+  urgent: 1.5,
+  express: 2.0,
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  standard: 'Standard (2-3 business days)',
+  urgent: 'Urgent (24 hours)',
+  express: 'Express (4 hours)',
+};
+
 /**
  * POST /api/checkout
  * Processes a checkout with guest info (email + phone), creates purchase record,
@@ -17,7 +30,7 @@ import { initiateStkPush, getMpesaCallbackUrl } from '@/lib/mpesa';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { items, email, phone, name, instructions } = body;
+    const { items, email, phone, name, instructions, priority } = body;
 
     // ── Validation ──────────────────────────────────────────────────
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -42,6 +55,12 @@ export async function POST(request: NextRequest) {
     }
 
     const buyerName = name || email.split('@')[0];
+    const priorityLevel = priority || 'standard';
+    const priorityMultiplier = PRIORITY_MULTIPLIERS[priorityLevel] || 1.0;
+    const priorityLabel = PRIORITY_LABELS[priorityLevel] || 'Standard (2-3 business days)';
+
+    // ── Check for test mode ─────────────────────────────────────────
+    const isTestMode = process.env.NEXT_PUBLIC_MPESA_TEST_MODE === 'true' || request.nextUrl.searchParams.get('test') === 'true';
 
     // ── Process each item ───────────────────────────────────────────
     const db = getDb();
@@ -60,11 +79,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // ── Calculate amount with priority multiplier ─────────────────
+      const baseAmount = document.price;
+      const chargeAmount = Math.round(baseAmount * priorityMultiplier);
+
       // ── M-Pesa flow ───────────────────────────────────────────────
       const checkoutId = `CHK-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const downloadToken = generateDownloadToken();
       const tokenExpiry = getTokenExpiry();
-      const chargeAmount = document.price;
 
       // Create purchase record (pending until M-Pesa confirms)
       const purchase = await db.purchase.create({
@@ -80,11 +102,65 @@ export async function POST(request: NextRequest) {
           tokenUsed: false,
           licenseAccepted: false,
           clientInstructions: instructions || null,
+          priority: priorityLevel,
+          buyerName,
         },
         include: {
           document: true,
         },
       });
+
+      // ── Test mode bypass ──────────────────────────────────────────
+      if (isTestMode) {
+        console.log(`🧪 TEST MODE: Bypassing M-Pesa for ${checkoutId}`);
+
+        // Mark as completed immediately
+        await db.purchase.update({
+          where: { id: purchase.id },
+          data: {
+            status: 'completed',
+            documentStatus: 'pending',
+          },
+        });
+
+        // Send receipt email
+        const downloadUrl = createDownloadUrl(downloadToken);
+        await sendPurchaseReceipt({
+          to: email,
+          buyerName,
+          documentTitle: document.title,
+          amount: chargeAmount,
+          downloadUrl,
+          transactionId: checkoutId,
+        });
+
+        // Send admin notification with priority info
+        const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/orders`;
+        await sendAdminOrderNotification({
+          buyerName,
+          buyerEmail: email,
+          buyerPhone: phone,
+          documentTitle: document.title,
+          documentCategory: document.category,
+          amount: chargeAmount,
+          transactionId: checkoutId,
+          clientInstructions: instructions || '',
+          adminUrl,
+          priority: priorityLevel,
+          priorityLabel,
+        });
+
+        results.push({
+          purchaseId: purchase.id,
+          checkoutId,
+          documentTitle: document.title,
+          amount: chargeAmount,
+          status: 'completed',
+          message: '🧪 TEST MODE: Payment simulated successfully!',
+          downloadUrl,
+        });
+        continue;
+      }
 
       // ── Initiate M-Pesa STK Push ──────────────────────────────────
       const callbackUrl = getMpesaCallbackUrl();
@@ -94,6 +170,7 @@ export async function POST(request: NextRequest) {
         amount: chargeAmount,
         accountRef: checkoutId,
         documentTitle: document.title,
+        priority: priorityLevel,
       });
 
       try {
@@ -162,7 +239,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'M-Pesa STK Push sent. Please check your phone and enter your PIN to complete payment.',
+      message: isTestMode
+        ? '🧪 TEST MODE: Payment simulated successfully!'
+        : 'M-Pesa STK Push sent. Please check your phone and enter your PIN to complete payment.',
       purchases: results,
     });
   } catch (error) {

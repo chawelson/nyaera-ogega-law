@@ -24,13 +24,22 @@ export interface AdminOrderNotificationParams {
   transactionId: string;
   clientInstructions: string;
   adminUrl: string;
+  priority?: string;
+  priorityLabel?: string;
 }
 
 /**
  * Sends an order notification email to the firm's admin when a new document order is placed.
  */
 export async function sendAdminOrderNotification(params: AdminOrderNotificationParams): Promise<boolean> {
-  const { buyerName, buyerEmail, buyerPhone, documentTitle, documentCategory, amount, transactionId, clientInstructions, adminUrl } = params;
+  const { buyerName, buyerEmail, buyerPhone, documentTitle, documentCategory, amount, transactionId, clientInstructions, adminUrl, priority, priorityLabel } = params;
+  // Add priority to the details section
+  const priorityHtml = priority ? `
+                <div class="detail-row">
+                  <span class="detail-label">Priority</span>
+                  <span class="detail-value" style="color: ${priority === 'express' ? '#dc2626' : priority === 'urgent' ? '#d97706' : '#090d3f'}">${priorityLabel || priority}</span>
+                </div>` : '';
+
 
   try {
     await resend.emails.send({
@@ -107,6 +116,7 @@ export async function sendAdminOrderNotification(params: AdminOrderNotificationP
                   <span class="detail-label">Date</span>
                   <span class="detail-value">${new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
+                ${priorityHtml}
               </div>
 
               <div class="instructions">

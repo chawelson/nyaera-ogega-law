@@ -43,10 +43,27 @@ model Purchase {
   clientInstructions String? @map("client_instructions")
   documentStatus    String   @default("pending") @map("document_status")
   adminNotes        String?  @map("admin_notes")
+  priority          String   @default("standard") @map("priority")
+  uploadedFilePath  String?  @map("uploaded_file_path")
+  buyerName         String?  @map("buyer_name")
   createdAt         DateTime @default(now()) @map("created_at")
   downloadLogs      DownloadLog[]
+  adminLogs         AdminLog[]
 
   @@map("purchases")
+}
+
+// ── Admin Log Model ─────────────────────────────────────────────────
+model AdminLog {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  action     String
+  details    String?
+  adminName  String   @default("Admin") @map("admin_name")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("admin_logs")
 }
 
 // ── Download Log Model ──────────────────────────────────────────────

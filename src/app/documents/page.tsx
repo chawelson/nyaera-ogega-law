@@ -142,7 +142,14 @@ export const metadata: Metadata = {
   alternates: { canonical: `${siteUrl}/documents` },
 };
 
-export default async function DocumentsPage() {
+export default async function DocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ test?: string }>;
+}) {
+  const { test } = await searchParams;
+  const isTestMode = test === 'true';
+
   let documents: DocumentItem[];
 
   try {
@@ -155,5 +162,5 @@ export default async function DocumentsPage() {
 
   const activeDocuments = documents.filter((d) => d.status === 'active');
 
-  return <DocumentsPageClient documents={activeDocuments} />;
+  return <DocumentsPageClient documents={activeDocuments} isTestMode={isTestMode} />;
 }

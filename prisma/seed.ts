@@ -230,6 +230,10 @@ const allDocuments: Array<{
   ...everydayDocs.map((d) => ({ ...d, category: 'Everyday Documents' })),
   // 11. Advocate Stamps
   ...advocateStamps.map((d) => ({ ...d, category: 'Advocate Stamps' })),
+  // 12. Test Files (only visible in test mode)
+  { title: 'Test Document 1 — KES 1', slug: 'test-document-1', category: 'Test Files', price: 1 },
+  { title: 'Test Document 2 — KES 1', slug: 'test-document-2', category: 'Test Files', price: 1 },
+  { title: 'Test Document 3 — KES 1', slug: 'test-document-3', category: 'Test Files', price: 1 },
 ];
 
 async function main() {

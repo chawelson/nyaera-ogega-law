@@ -18,6 +18,8 @@ import {
   ExternalLink,
   FileText,
   Clock,
+  Zap,
+  Rocket,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -60,6 +62,10 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [purchaseResults, setPurchaseResults] = useState<Array<{ documentTitle: string; downloadUrl: string }>>([]);
+  const [priority, setPriority] = useState<string>('standard');
+  const [isTestMode, setIsTestMode] = useState(
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('test') === 'true' : false
+  );
 
   // Reset checkout state when drawer closes
   useEffect(() => {
@@ -136,6 +142,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           phone: phone.trim(),
           name: name.trim() || email.split('@')[0],
           instructions: instructions.trim(),
+          priority,
         }),
       });
 
@@ -433,6 +440,60 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         )}
                         <p className="mt-1.5 text-xs text-slate-400">
                           Your receipt and download link will be sent here.
+                        </p>
+                      </div>
+
+                      {/* Test Mode Banner */}
+                      {isTestMode && (
+                        <div className="mb-6 rounded-xl bg-purple-50 border-2 border-purple-300 p-4">
+                          <div className="flex items-start gap-3">
+                            <Zap size={20} className="text-purple-600 mt-0.5 shrink-0" />
+                            <div>
+                              <h3 className="text-sm font-bold text-purple-800">🧪 Test Mode Active</h3>
+                              <p className="text-xs text-purple-600 mt-1">
+                                Payment will be simulated without real M-Pesa charges. A download link will be
+                                generated immediately for testing purposes.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Priority Selection */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                          Drafting Priority <span className="text-red-500">*</span>
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { value: 'standard', label: 'Standard', icon: Clock, desc: '2-3 days', color: 'text-slate-700', border: 'border-slate-300', bg: 'bg-slate-50', activeBg: 'bg-slate-800', activeText: 'text-white', activeBorder: 'border-slate-800' },
+                            { value: 'urgent', label: 'Urgent', icon: Zap, desc: '24 hours', color: 'text-amber-700', border: 'border-amber-300', bg: 'bg-amber-50', activeBg: 'bg-amber-600', activeText: 'text-white', activeBorder: 'border-amber-600' },
+                            { value: 'express', label: 'Express', icon: Rocket, desc: '4 hours', color: 'text-red-700', border: 'border-red-300', bg: 'bg-red-50', activeBg: 'bg-red-600', activeText: 'text-white', activeBorder: 'border-red-600' },
+                          ].map((opt) => {
+                            const Icon = opt.icon;
+                            const isActive = priority === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setPriority(opt.value)}
+                                className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 transition-all duration-200 ${
+                                  isActive
+                                    ? `${opt.activeBg} ${opt.activeText} ${opt.activeBorder}`
+                                    : `${opt.bg} ${opt.color} ${opt.border} hover:shadow-sm`
+                                }`}
+                              >
+                                <Icon size={20} />
+                                <span className="text-xs font-bold">{opt.label}</span>
+                                <span className="text-[10px] opacity-80">{opt.desc}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="mt-1.5 text-xs text-slate-400">
+                          {priority === 'express' && '×2.0 price — Immediate drafting, ready in 4 hours'}
+                          {priority === 'urgent' && '×1.5 price — Expedited drafting, ready in 24 hours'}
+                          {priority === 'standard' && 'Standard drafting, ready in 2-3 business days'}
                         </p>
                       </div>
 

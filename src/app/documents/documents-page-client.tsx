@@ -192,10 +192,17 @@ function Particles() {
 // ── Props ───────────────────────────────────────────────────────────
 interface Props {
   documents: DocumentItem[];
+  isTestMode?: boolean;
 }
 
 // ── Main Client Component ──────────────────────────────────────────
-export default function DocumentsPageClient({ documents }: Props) {
+export default function DocumentsPageClient({ documents, isTestMode = false }: Props) {
+  // Filter out test documents unless in test mode
+  const filteredByTestMode = useMemo(() => {
+    if (isTestMode) return documents;
+    return documents.filter((d) => d.category !== 'Test Files');
+  }, [documents, isTestMode]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
@@ -212,7 +219,7 @@ export default function DocumentsPageClient({ documents }: Props) {
 
   // Filtered documents
   const filteredDocuments = useMemo(() => {
-    let result = documents;
+    let result = filteredByTestMode;
 
     if (activeCategory !== 'All') {
       result = result.filter((d) => d.category === activeCategory);
@@ -229,7 +236,7 @@ export default function DocumentsPageClient({ documents }: Props) {
     }
 
     return result;
-  }, [documents, activeCategory, searchQuery]);
+  }, [filteredByTestMode, activeCategory, searchQuery]);
 
   const visibleDocuments = useMemo(
     () => filteredDocuments.slice(0, visibleCount),
