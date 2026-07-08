@@ -70,8 +70,32 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [Admin Upload] Uploaded to Supabase:', supabasePath);
 
-    // Update the purchase record with the Supabase path
+    // ── Update ONLY the specific purchase record ────────────────────
+    // Verify the checkoutId matches to ensure we're updating the right order
     const db = getDb();
+    const purchase = await db.purchase.findUnique({
+      where: { id: parseInt(purchaseId, 10) },
+    });
+
+    if (!purchase) {
+      return NextResponse.json(
+        { error: 'Purchase record not found' },
+        { status: 404 }
+      );
+    }
+
+    if (purchase.checkoutId !== checkoutId) {
+      console.error('❌ [Admin Upload] Checkout ID mismatch:', {
+        expected: purchase.checkoutId,
+        received: checkoutId,
+      });
+      return NextResponse.json(
+        { error: 'Checkout ID mismatch. Cannot update this order.' },
+        { status: 400 }
+      );
+    }
+
+    // Only update this specific purchase — no other orders are affected
     await db.purchase.update({
       where: { id: parseInt(purchaseId, 10) },
       data: {

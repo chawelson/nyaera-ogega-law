@@ -46,6 +46,8 @@ model Purchase {
   priority          String   @default("standard") @map("priority")
   uploadedFilePath  String?  @map("uploaded_file_path")
   buyerName         String?  @map("buyer_name")
+  downloadCount     Int      @default(0) @map("download_count")
+  maxDownloads      Int      @default(3) @map("max_downloads")
   createdAt         DateTime @default(now()) @map("created_at")
   downloadLogs      DownloadLog[]
   adminLogs         AdminLog[]

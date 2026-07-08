@@ -67,10 +67,11 @@ export async function GET(
       licenseAccepted: purchase.licenseAccepted,
     });
 
-    // ── Check if token has been used (one-time use) ─────────────────
-    if (purchase.tokenUsed) {
+    // ── Check download count limit (max 3 downloads) ────────────────
+    const maxDownloads = purchase.maxDownloads || 3;
+    if (purchase.downloadCount >= maxDownloads) {
       return NextResponse.json(
-        { error: 'This download link has already been used. Each link can only be used once.' },
+        { error: 'Download limit reached. Please contact support.' },
         { status: 410 }
       );
     }
@@ -145,10 +146,13 @@ export async function GET(
       watermarkInfo
     );
 
-    // ── Mark token as used ──────────────────────────────────────────
+    // ── Increment download count ────────────────────────────────────
     await db.purchase.update({
       where: { id: purchase.id },
-      data: { tokenUsed: true },
+      data: {
+        downloadCount: { increment: 1 },
+        tokenUsed: true,
+      },
     });
 
     // ── Log the download ────────────────────────────────────────────

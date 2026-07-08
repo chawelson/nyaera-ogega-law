@@ -75,6 +75,10 @@ interface ApiPurchase {
   tokenExpiry: string | null;
   tokenUsed: boolean;
   licenseAccepted: boolean;
+  uploadedFilePath: string | null;
+  documentStatus: string;
+  downloadCount: number;
+  maxDownloads: number;
 }
 
 export default function MyPurchasesPage() {
@@ -463,6 +467,8 @@ export default function MyPurchasesPage() {
                 const transactionId = 'transactionId' in purchase ? purchase.transactionId : '';
                 const date = 'date' in purchase ? purchase.date : '';
                 const downloadToken = 'downloadToken' in purchase ? purchase.downloadToken : null;
+                const uploadedFilePath = 'uploadedFilePath' in purchase ? purchase.uploadedFilePath : null;
+                const documentStatus = 'documentStatus' in purchase ? purchase.documentStatus : null;
 
                 return (
                   <motion.div
@@ -506,7 +512,7 @@ export default function MyPurchasesPage() {
                           </p>
                         </div>
 
-                        {purchase.status === 'Completed' && (
+                        {purchase.status === 'Completed' && uploadedFilePath && (
                           <Button
                             onClick={() => handleDownload(downloadToken, purchase.id)}
                             disabled={downloading[purchase.id]}
@@ -521,6 +527,12 @@ export default function MyPurchasesPage() {
                             )}
                             <span className="ml-1.5 text-xs font-semibold">Download</span>
                           </Button>
+                        )}
+
+                        {purchase.status === 'Completed' && !uploadedFilePath && (
+                          <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50 text-xs">
+                            Document in progress
+                          </Badge>
                         )}
 
                         {purchase.status === 'Pending' && (

@@ -51,6 +51,10 @@ export async function GET(
       tokenExpiry: p.tokenExpiry?.toISOString() || null,
       tokenUsed: p.tokenUsed,
       licenseAccepted: p.licenseAccepted,
+      uploadedFilePath: p.uploadedFilePath,
+      documentStatus: p.documentStatus,
+      downloadCount: p.downloadCount,
+      maxDownloads: p.maxDownloads,
     }));
 
     return NextResponse.json({ purchases: formatted });
