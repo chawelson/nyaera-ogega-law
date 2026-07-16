@@ -26,70 +26,70 @@ import {
 const services = [
   {
     title: 'Company Registration',
-    chinese: '\u516c\u53f8\u6ce8\u518c',
+    chinese: '公司注册',
     icon: Building2,
     description:
       'Full-service company incorporation in Kenya \u2014 from name reservation and document preparation to certificate issuance and post-registration compliance.',
   },
   {
     title: 'Foreign Investment Advisory',
-    chinese: '\u5916\u56fd\u6295\u8d44\u54a8\u8be2',
+    chinese: '外国投资咨询',
     icon: Globe,
     description:
       'Strategic guidance on Kenya\u2019s foreign investment regulations, sector-specific incentives, joint ventures, and market entry structures for Chinese enterprises.',
   },
   {
     title: 'Commercial Contracts',
-    chinese: '\u5546\u4e1a\u5408\u540c',
+    chinese: '商业合同',
     icon: FileText,
     description:
       'Drafting, review, and negotiation of cross-border commercial agreements \u2014 including distribution, supply, agency, and joint venture contracts.',
   },
   {
     title: 'Employment Law',
-    chinese: '\u52b3\u52a8\u6cd5',
+    chinese: '劳动法',
     icon: Users,
     description:
       'Comprehensive employment law support \u2014 compliant contracts, HR policies, disciplinary procedures, and representation before the Employment and Labour Relations Court.',
   },
   {
     title: 'Immigration & Work Permits',
-    chinese: '\u79fb\u6c11\u4e0e\u5de5\u4f5c\u8bb8\u53ef',
+    chinese: '移民和工作许可',
     icon: Briefcase,
     description:
       'Work permit applications, special passes, dependent passes, and immigration compliance for Chinese executives, managers, and technical staff relocating to Kenya.',
   },
   {
     title: 'Real Estate Acquisition',
-    chinese: '\u623f\u5730\u4ea7\u6536\u8d2d',
+    chinese: '房地产收购',
     icon: Home,
     description:
       'End-to-end legal support for property acquisition \u2014 due diligence, sale agreements, title transfers, lease negotiations, and development approvals.',
   },
   {
     title: 'Debt Recovery',
-    chinese: '\u503a\u52a1\u8ffd\u8ba8',
+    chinese: '债务追收',
     icon: Landmark,
     description:
       'Aggressive yet strategic debt recovery services \u2014 demand letters, statutory notices, court proceedings, and enforcement of judgments.',
   },
   {
     title: 'Litigation & Dispute Resolution',
-    chinese: '\u8bc9\u8bbc\u4e0e\u4e89\u8bae\u89e3\u51b3',
+    chinese: '诉讼与争议解决',
     icon: Gavel,
     description:
       'Representation in Kenyan courts and tribunals for commercial disputes, contractual breaches, and cross-border legal conflicts \u2014 plus arbitration and mediation.',
   },
   {
     title: 'Tax & Regulatory Compliance',
-    chinese: '\u7a0e\u52a1\u4e0e\u6cd5\u89c4\u5408\u89c4',
+    chinese: '税务与合规',
     icon: ShieldCheck,
     description:
       'Tax registration, filing compliance, transfer pricing advisory, and regulatory licensing to ensure your business operates within Kenya\u2019s legal framework.',
   },
   {
     title: 'Intellectual Property Protection',
-    chinese: '\u77e5\u8bc6\u4ea7\u6743\u4fdd\u62a4',
+    chinese: '知识产权保护',
     icon: Lightbulb,
     description:
       'Trademark registration, patent filings, copyright protection, and IP enforcement to safeguard your brand and innovations in the Kenyan market.',
@@ -101,28 +101,28 @@ const services = [
 const whyChooseUs = [
   {
     title: 'Bilingual Legal Team',
-    chinese: '\u53cc\u8bed\u6cd5\u5f8b\u56e2\u961f',
+    chinese: '双语法律团队',
     icon: MessageSquare,
     description:
       'Our team communicates fluently in English and Mandarin, ensuring clear, accurate legal advice with no language barriers.',
   },
   {
     title: 'Deep Understanding of Chinese Business Culture',
-    chinese: '\u6df1\u5165\u4e86\u89e3\u4e2d\u56fd\u5546\u4e1a\u6587\u5316',
+    chinese: '深入了解中国商业文化',
     icon: Award,
     description:
       'We understand how Chinese enterprises operate \u2014 from decision-making structures to negotiation styles \u2014 and tailor our approach accordingly.',
   },
   {
     title: 'Kenyan Law Expertise',
-    chinese: '\u80af\u5c3c\u4e9a\u6cd5\u5f8b\u4e13\u4e1a\u77e5\u8bc6',
+    chinese: '肯尼亚法律专业知识',
     icon: Gavel,
     description:
       'Deep knowledge of Kenyan statutory and case law across corporate, property, employment, and dispute resolution practice areas.',
   },
   {
     title: 'Proven Track Record',
-    chinese: '\u53ef\u9760\u7684\u4e1a\u7ee9\u8bb0\u5f55',
+    chinese: '可靠的业绩记录',
     icon: Star,
     description:
       'We have successfully guided numerous Chinese-funded projects and businesses through Kenya\u2019s legal and regulatory landscape.',
@@ -238,8 +238,15 @@ export default function ChineseInvestorsPage() {
                 Legal Services for Chinese Investors and Businesses in Kenya
               </h1>
 
-              <p className="mt-4 text-sm leading-relaxed text-white/70 sm:text-base md:mt-6 md:text-lg">
-                \u4e3a\u4e2d\u56fd\u6295\u8d44\u8005\u548c\u4f01\u4e1a\u63d0\u4f9b\u4e13\u4e1a\u7684\u80af\u5c3c\u4e9a\u6cd5\u5f8b\u670d\u52a1
+              <p
+                className="mt-4 text-sm leading-relaxed text-white/70 sm:text-base md:mt-6 md:text-lg"
+                lang="zh" className="font-chinese"
+              >
+                肯尼亚中国投资者和企业法律服务
+              </p>
+
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/60 sm:text-base">
+                为进入肯尼亚的中国企业提供专业法律指导
               </p>
 
               <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/60 sm:text-base">
@@ -307,7 +314,7 @@ export default function ChineseInvestorsPage() {
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
                 Tailored legal services designed specifically for Chinese enterprises navigating
-                Kenya's business and regulatory environment.
+                Kenya&apos;s business and regulatory environment.
               </p>
             </div>
           </AnimatedSection>
@@ -330,7 +337,9 @@ export default function ChineseInvestorsPage() {
                   <service.icon size={24} />
                 </div>
                 <h3 className="font-display text-xl font-bold text-[#090d3f]">{service.title}</h3>
-                <p className="mt-1 text-sm font-medium text-[#ab812b]">{service.chinese}</p>
+                <p className="mt-1 text-sm font-medium text-[#ab812b]" lang="zh" className="font-chinese">
+                  {service.chinese}
+                </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">{service.description}</p>
               </motion.div>
             ))}
@@ -375,7 +384,9 @@ export default function ChineseInvestorsPage() {
                 </div>
                 <div>
                   <h3 className="font-display text-lg font-bold text-[#090d3f]">{item.title}</h3>
-                  <p className="mt-0.5 text-sm font-medium text-[#ab812b]">{item.chinese}</p>
+                  <p className="mt-0.5 text-sm font-medium text-[#ab812b]" lang="zh" className="font-chinese">
+                    {item.chinese}
+                  </p>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.description}</p>
                 </div>
               </motion.div>
