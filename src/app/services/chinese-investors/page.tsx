@@ -239,8 +239,8 @@ export default function ChineseInvestorsPage() {
               </h1>
 
               <p
-                className="mt-4 text-sm leading-relaxed text-white/70 sm:text-base md:mt-6 md:text-lg"
-                lang="zh" className="font-chinese"
+                className="mt-4 text-sm leading-relaxed text-white/70 sm:text-base md:mt-6 md:text-lg font-chinese"
+                lang="zh"
               >
                 肯尼亚中国投资者和企业法律服务
               </p>
@@ -314,7 +314,7 @@ export default function ChineseInvestorsPage() {
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
                 Tailored legal services designed specifically for Chinese enterprises navigating
-                Kenya&apos;s business and regulatory environment.
+                Kenya's business and regulatory environment.
               </p>
             </div>
           </AnimatedSection>
@@ -337,7 +337,7 @@ export default function ChineseInvestorsPage() {
                   <service.icon size={24} />
                 </div>
                 <h3 className="font-display text-xl font-bold text-[#090d3f]">{service.title}</h3>
-                <p className="mt-1 text-sm font-medium text-[#ab812b]" lang="zh" className="font-chinese">
+                <p className="mt-1 text-sm font-medium text-[#ab812b] font-chinese" lang="zh">
                   {service.chinese}
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">{service.description}</p>
@@ -384,7 +384,7 @@ export default function ChineseInvestorsPage() {
                 </div>
                 <div>
                   <h3 className="font-display text-lg font-bold text-[#090d3f]">{item.title}</h3>
-                  <p className="mt-0.5 text-sm font-medium text-[#ab812b]" lang="zh" className="font-chinese">
+                  <p className="mt-0.5 text-sm font-medium text-[#ab812b] font-chinese" lang="zh">
                     {item.chinese}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.description}</p>
