@@ -20,6 +20,7 @@ import {
   ShoppingCart,
   ShoppingBag,
   FileText,
+  Globe,
 } from "lucide-react";
 
 import {
@@ -54,6 +55,7 @@ const navLinks = [
       { href: '/documents', label: 'Documents', icon: FileText },
       { href: '/insights', label: 'Insights', icon: Newspaper },
       { href: '/careers', label: 'Careers', icon: Briefcase },
+      { href: '/services/chinese-investors', label: 'Chinese Investors', icon: Globe },
     ],
   },
   { href: '/contact', label: 'Contact', icon: MessageSquare },
