@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
+import { Playfair_Display, Plus_Jakarta_Sans, Noto_Sans_SC } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -10,6 +10,12 @@ import { siteUrl } from '@/lib/site-data';
 
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair', display: 'swap' });
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' });
+const notoSansSC = Noto_Sans_SC({
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  variable: '--font-noto-sans-sc',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -80,8 +86,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en-KE">
       <head>
         <JsonLd />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap"
+          rel="stylesheet"
+        />
       </head>
-      <body className={`${playfair.variable} ${jakarta.variable} antialiased`}>
+      <body className={`${playfair.variable} ${jakarta.variable} ${notoSansSC.variable} antialiased`}>
         <Providers>
           <Header />
           <main>{children}</main>
